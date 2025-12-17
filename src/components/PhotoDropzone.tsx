@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useDropzone, FileRejection } from 'react-dropzone';
-import { Upload, Image as ImageIcon, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { Camera, Upload, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { t } from '@/lib/i18n';
 
 interface PhotoDropzoneProps {
@@ -17,146 +16,171 @@ export default function PhotoDropzone({
     isProcessing = false,
     processingProgress,
 }: PhotoDropzoneProps) {
-    const [dragError, setDragError] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
-    const onDrop = useCallback(
-        (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-            setDragError(null);
+    const handleClick = () => {
+        if (!isProcessing && inputRef.current) {
+            inputRef.current.click();
+        }
+    };
 
-            if (rejectedFiles.length > 0) {
-                setDragError(t('create.errors.rejected'));
-                return;
-            }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            onFilesSelected(Array.from(files));
+        }
+        // Reset input to allow selecting same files again
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+    };
 
-            if (acceptedFiles.length === 0) {
-                setDragError(t('create.errors.noPhotos'));
-                return;
-            }
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isProcessing) {
+            setIsDragging(true);
+        }
+    };
 
-            onFilesSelected(acceptedFiles);
-        },
-        [onFilesSelected]
-    );
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
 
-    const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
-        onDrop,
-        accept: {
-            'image/jpeg': ['.jpg', '.jpeg'],
-            'image/png': ['.png'],
-            'image/heic': ['.heic'],
-            'image/heif': ['.heif'],
-        },
-        disabled: isProcessing,
-        multiple: true,
-    });
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (isProcessing) return;
+
+        const files = Array.from(e.dataTransfer.files).filter(file =>
+            file.type.startsWith('image/') ||
+            file.name.toLowerCase().endsWith('.heic') ||
+            file.name.toLowerCase().endsWith('.heif')
+        );
+
+        if (files.length > 0) {
+            onFilesSelected(files);
+        }
+    };
 
     return (
         <div className="w-full">
-            <div
-                {...getRootProps()}
-                className={`
-          relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center
-          transition-all duration-300 cursor-pointer
-          ${isDragActive && !isDragReject ? 'border-purple-500 bg-purple-500/10' : ''}
-          ${isDragReject ? 'border-red-500 bg-red-500/10' : ''}
-          ${!isDragActive && !isProcessing ? 'border-white/20 hover:border-white/40 hover:bg-white/5' : ''}
-          ${isProcessing ? 'border-white/10 bg-white/5 cursor-not-allowed' : ''}
-        `}
-            >
-                <input {...getInputProps()} />
+            {/* Hidden file input - native for iOS */}
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*,.heic,.heif"
+                multiple
+                onChange={handleChange}
+                className="hidden"
+                disabled={isProcessing}
+            />
 
-                <AnimatePresence mode="wait">
+            {/* Main dropzone area */}
+            <motion.div
+                onClick={handleClick}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                whileTap={!isProcessing ? { scale: 0.98 } : undefined}
+                className={`
+          relative overflow-hidden rounded-3xl p-8 md:p-12
+          cursor-pointer select-none
+          transition-all duration-300 ease-out
+          ${isDragging
+                        ? 'bg-gradient-to-br from-purple-600/30 to-pink-600/30 border-2 border-purple-400'
+                        : 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 hover:border-white/20'
+                    }
+          ${isProcessing ? 'pointer-events-none' : ''}
+        `}
+                style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
+                }}
+            >
+                {/* Animated background gradient */}
+                <div className="absolute inset-0 opacity-50">
+                    <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl" />
+                </div>
+
+                <div className="relative z-10">
                     {isProcessing ? (
-                        <motion.div
-                            key="processing"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="space-y-4"
-                        >
-                            <div className="mx-auto w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                <ImageIcon className="w-8 h-8 text-purple-400 animate-pulse" />
-                            </div>
+                        /* Processing state */
+                        <div className="text-center space-y-6">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                                className="w-16 h-16 mx-auto"
+                            >
+                                <Loader2 className="w-16 h-16 text-purple-400" />
+                            </motion.div>
+
                             <div>
-                                <p className="text-white font-medium">{t('create.dropzone.processing')}</p>
+                                <p className="text-lg font-medium text-white mb-1">
+                                    {t('create.dropzone.processing')}
+                                </p>
                                 {processingProgress && (
-                                    <p className="text-white/60 text-sm mt-1">
-                                        {t('create.dropzone.progress', {
-                                            current: processingProgress.current,
-                                            total: processingProgress.total,
-                                            filename: processingProgress.filename,
-                                        })}
+                                    <p className="text-white/60 text-sm">
+                                        {processingProgress.current} / {processingProgress.total}
                                     </p>
                                 )}
                             </div>
-                            <div className="w-full max-w-xs mx-auto bg-white/10 rounded-full h-2 overflow-hidden">
-                                <motion.div
-                                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                                    initial={{ width: '0%' }}
-                                    animate={{
-                                        width: processingProgress
-                                            ? `${(processingProgress.current / processingProgress.total) * 100}%`
-                                            : '0%',
-                                    }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                            </div>
-                        </motion.div>
+
+                            {/* Progress bar */}
+                            {processingProgress && (
+                                <div className="w-full max-w-xs mx-auto h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <motion.div
+                                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                                        initial={{ width: '0%' }}
+                                        animate={{
+                                            width: `${(processingProgress.current / processingProgress.total) * 100}%`,
+                                        }}
+                                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     ) : (
-                        <motion.div
-                            key="idle"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="space-y-4"
-                        >
+                        /* Idle state */
+                        <div className="text-center space-y-6">
+                            {/* Icon */}
                             <motion.div
-                                className="mx-auto w-16 h-16 rounded-full bg-white/10 flex items-center justify-center"
-                                animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
+                                initial={{ scale: 1 }}
+                                animate={{ scale: isDragging ? 1.1 : 1 }}
+                                className="relative w-20 h-20 mx-auto"
                             >
-                                <Upload
-                                    className={`w-8 h-8 transition-colors ${isDragActive ? 'text-purple-400' : 'text-white/60'
-                                        }`}
-                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Camera className="w-10 h-10 text-white/80" />
+                                </div>
                             </motion.div>
+
+                            {/* Text */}
                             <div>
-                                <p className="text-white font-medium">
-                                    {isDragActive ? t('create.dropzone.titleActive') : t('create.dropzone.title')}
+                                <p className="text-xl font-semibold text-white mb-2">
+                                    {isDragging ? t('create.dropzone.titleActive') : '写真を選択'}
                                 </p>
-                                <p className="text-white/60 text-sm mt-1">
-                                    {t('create.dropzone.subtitle')}
+                                <p className="text-white/50 text-sm">
+                                    タップして写真を選択、またはドラッグ＆ドロップ
                                 </p>
                             </div>
-                        </motion.div>
+
+                            {/* Supported formats */}
+                            <div className="flex items-center justify-center gap-2 text-xs text-white/40">
+                                <span className="px-2 py-1 bg-white/5 rounded-md">JPEG</span>
+                                <span className="px-2 py-1 bg-white/5 rounded-md">PNG</span>
+                                <span className="px-2 py-1 bg-white/5 rounded-md">HEIC</span>
+                            </div>
+                        </div>
                     )}
-                </AnimatePresence>
-
-                {/* Gradient border effect on drag */}
-                {isDragActive && !isDragReject && (
-                    <motion.div
-                        className="absolute inset-0 pointer-events-none"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20" />
-                    </motion.div>
-                )}
-            </div>
-
-            {/* Error message */}
-            <AnimatePresence>
-                {dragError && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="mt-4 p-4 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center gap-3"
-                    >
-                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                        <p className="text-red-200 text-sm">{dragError}</p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                </div>
+            </motion.div>
         </div>
     );
 }

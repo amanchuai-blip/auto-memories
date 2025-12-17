@@ -3,18 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MapPin, Sparkles } from 'lucide-react';
+import { Plus, ChevronRight, Trash2 } from 'lucide-react';
 import { useTrips } from '@/hooks/useTrips';
-import TripCard from '@/components/TripCard';
 import { deleteTrip } from '@/lib/db';
-import { t } from '@/lib/i18n';
+import { ACHIEVEMENT_DEFINITIONS } from '@/types';
+import { formatDate, formatDuration } from '@/lib/i18n';
 
 export default function HomePage() {
   const { trips, isLoading } = useTrips();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = async (tripId: string) => {
-    if (confirm(t('trip.deleteConfirm'))) {
+  const handleDelete = async (e: React.MouseEvent, tripId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm('この思い出を削除しますか？')) {
       setDeletingId(tripId);
       await deleteTrip(tripId);
       setDeletingId(null);
@@ -22,55 +24,46 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen pb-24">
+    <main className="min-h-screen bg-[#0a0a0f]">
       {/* Header */}
-      <header className="p-6 pt-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="w-8 h-8 text-purple-400" />
-            <h1 className="text-3xl font-bold gradient-text">{t('app.name')}</h1>
-          </div>
-          <p className="text-white/60">{t('app.tagline')}</p>
-        </motion.div>
+      <header className="pt-12 pb-6 px-4">
+        <div className="max-w-lg mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h1 className="text-3xl font-bold text-white mb-1">Auto Memories</h1>
+            <p className="text-white/50">旅の写真を思い出に</p>
+          </motion.div>
+        </div>
       </header>
 
-      {/* Content */}
-      <div className="px-6 max-w-2xl mx-auto">
-        {/* Create new trip button */}
+      <div className="max-w-lg mx-auto px-4 pb-8 space-y-6">
+        {/* Create button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8"
         >
           <Link href="/create">
             <motion.div
-              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="relative overflow-hidden rounded-2xl p-6 cursor-pointer"
+              className="relative overflow-hidden rounded-3xl p-6"
               style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3))',
+                background: 'linear-gradient(135deg, #7C3AED 0%, #DB2777 100%)',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <div className="relative z-10 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
                   <Plus className="w-7 h-7 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-1">
-                    {t('home.createNew')}
-                  </h2>
-                  <p className="text-white/70 text-sm">
-                    {t('home.createNewDesc')}
-                  </p>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-white">新しい思い出を作る</h2>
+                  <p className="text-white/70 text-sm">写真からエンドロールを生成</p>
                 </div>
+                <ChevronRight className="w-6 h-6 text-white/60" />
               </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-500/20 rounded-full blur-2xl" />
             </motion.div>
           </Link>
         </motion.div>
@@ -81,51 +74,87 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="flex items-center gap-2 mb-4">
-            <MapPin className="w-5 h-5 text-white/50" />
-            <h2 className="text-lg font-semibold text-white">{t('home.pastMemories')}</h2>
-            {trips.length > 0 && (
-              <span className="ml-auto text-sm text-white/50">
-                {t('home.tripCount', { count: trips.length })}
-              </span>
-            )}
-          </div>
+          <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-3 px-1">
+            過去の思い出
+          </h2>
 
           {isLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 rounded-2xl bg-white/5 animate-pulse" />
+                <div key={i} className="h-24 rounded-2xl bg-white/5 animate-pulse" />
               ))}
             </div>
           ) : trips.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-16 px-6 rounded-2xl bg-white/5 border border-white/10"
-            >
+            <div className="text-center py-16 px-6 rounded-3xl bg-white/[0.03] border border-white/5">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                <MapPin className="w-8 h-8 text-white/30" />
+                <span className="text-3xl">📷</span>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">{t('home.noTrips')}</h3>
-              <p className="text-white/50 text-sm max-w-xs mx-auto">{t('home.noTripsDesc')}</p>
-            </motion.div>
+              <p className="text-white/50">まだ思い出がありません</p>
+              <p className="text-white/30 text-sm mt-1">最初の思い出を作成しましょう</p>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AnimatePresence>
                 {trips.map((trip, index) => (
                   <motion.div
                     key={trip.id}
                     initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: deletingId === trip.id ? 0.5 : 1, y: 0 }}
                     exit={{ opacity: 0, x: -100 }}
-                    transition={{ delay: index * 0.1 }}
-                    style={{ opacity: deletingId === trip.id ? 0.5 : 1 }}
+                    transition={{ delay: index * 0.05 }}
                   >
-                    <TripCard
-                      trip={trip}
-                      onClick={() => window.location.href = `/play/${trip.id}`}
-                      onDelete={() => handleDelete(trip.id)}
-                    />
+                    <Link href={`/play/${trip.id}`}>
+                      <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        className="group relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:bg-white/[0.06] transition-colors"
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Achievement icons preview */}
+                          <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                            {trip.achievements.length > 0 ? (
+                              <span className="text-2xl">
+                                {ACHIEVEMENT_DEFINITIONS[trip.achievements[0].type].icon}
+                              </span>
+                            ) : (
+                              <span className="text-2xl">🗺️</span>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-white truncate">{trip.name}</h3>
+                            <div className="flex items-center gap-3 text-sm text-white/40 mt-1">
+                              <span>{trip.totalPhotos}枚</span>
+                              <span>•</span>
+                              <span>{trip.totalDistance}km</span>
+                              {trip.achievements.length > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>🏆 {trip.achievements.length}</span>
+                                </>
+                              )}
+                            </div>
+                            {trip.startDate && (
+                              <p className="text-xs text-white/30 mt-1">
+                                {formatDate(trip.startDate)}
+                              </p>
+                            )}
+                          </div>
+
+                          <ChevronRight className="w-5 h-5 text-white/20 shrink-0" />
+                        </div>
+
+                        {/* Delete button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleDelete(e, trip.id)}
+                          className="absolute top-3 right-3 p-2 rounded-full bg-red-500/0 active:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                          style={{ WebkitTapHighlightColor: 'transparent' }}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </motion.div>
+                    </Link>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -134,17 +163,12 @@ export default function HomePage() {
         </motion.div>
       </div>
 
-      {/* Recording tip */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent"
-      >
-        <div className="max-w-2xl mx-auto">
-          <p className="text-center text-white/40 text-sm">{t('app.recordingTip')}</p>
-        </div>
-      </motion.div>
+      {/* Footer */}
+      <footer className="py-8 text-center">
+        <p className="text-white/20 text-xs">
+          💡 スクリーン録画で動画として保存できます
+        </p>
+      </footer>
     </main>
   );
 }

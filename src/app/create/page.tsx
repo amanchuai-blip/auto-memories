@@ -3,12 +3,12 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Sparkles, AlertCircle, Check } from 'lucide-react';
 import PhotoDropzone from '@/components/PhotoDropzone';
 import { processImages } from '@/lib/imageUtils';
 import { calculateAchievements, generateRouteFromPhotos, calculateTotalDistance, calculateDuration } from '@/lib/achievements';
 import { createTrip, addPhotosToTrip, getAllTrips } from '@/lib/db';
-import { t, formatDate } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
 import type { Photo, Trip } from '@/types';
 
 export default function CreatePage() {
@@ -18,6 +18,10 @@ export default function CreatePage() {
     const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0, filename: '' });
     const [error, setError] = useState<string | null>(null);
     const [processedPhotos, setProcessedPhotos] = useState<Photo[]>([]);
+
+    const handleBack = () => {
+        router.push('/');
+    };
 
     const handleFilesSelected = useCallback(async (files: File[]) => {
         setError(null);
@@ -29,7 +33,7 @@ export default function CreatePage() {
             });
 
             if (processed.length === 0) {
-                setError(t('create.errors.noPhotos'));
+                setError('写真を処理できませんでした。別の画像をお試しください。');
                 setIsProcessing(false);
                 return;
             }
@@ -37,7 +41,7 @@ export default function CreatePage() {
             const validPhotos = processed.filter((p) => p.timestamp !== null);
 
             if (validPhotos.length === 0) {
-                setError(t('create.errors.noExif'));
+                setError('日付情報のある写真が見つかりません。');
                 setIsProcessing(false);
                 return;
             }
@@ -66,7 +70,7 @@ export default function CreatePage() {
             }
         } catch (err) {
             console.error('Processing error:', err);
-            setError(t('create.errors.noPhotos'));
+            setError('処理中にエラーが発生しました。');
         } finally {
             setIsProcessing(false);
         }
@@ -79,7 +83,6 @@ export default function CreatePage() {
         setError(null);
 
         try {
-            // Check if this is the first trip
             const existingTrips = await getAllTrips();
             const isFirstTrip = existingTrips.length === 0;
 
@@ -115,46 +118,52 @@ export default function CreatePage() {
             router.push(`/play/${tripId}`);
         } catch (err) {
             console.error('Failed to create trip:', err);
-            setError(t('create.errors.saveFailed'));
+            setError('保存に失敗しました。');
             setIsProcessing(false);
         }
     };
 
     return (
-        <main className="min-h-screen pb-24">
-            <header className="p-6 pt-12">
-                <div className="max-w-2xl mx-auto">
+        <main className="min-h-screen bg-[#0a0a0f]">
+            {/* Header */}
+            <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#0a0a0f]/80 border-b border-white/5">
+                <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-4">
                     <button
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-6"
+                        type="button"
+                        onClick={handleBack}
+                        className="p-2 -ml-2 rounded-full active:bg-white/10 transition-colors"
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span>{t('create.back')}</span>
+                        <ArrowLeft className="w-6 h-6 text-white" />
                     </button>
-
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                        <div className="flex items-center gap-3 mb-2">
-                            <Sparkles className="w-6 h-6 text-purple-400" />
-                            <h1 className="text-2xl font-bold text-white">{t('create.title')}</h1>
-                        </div>
-                        <p className="text-white/60">{t('create.subtitle')}</p>
-                    </motion.div>
+                    <h1 className="text-lg font-semibold text-white">新しい思い出</h1>
                 </div>
             </header>
 
-            <div className="px-6 max-w-2xl mx-auto space-y-6">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                    <label className="block text-sm text-white/60 mb-2">{t('create.tripName')}</label>
+            {/* Content */}
+            <div className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-32">
+                {/* Trip name input */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2"
+                >
+                    <label className="text-sm font-medium text-white/70">旅行名</label>
                     <input
                         type="text"
                         value={tripName}
                         onChange={(e) => setTripName(e.target.value)}
-                        placeholder={t('create.tripNamePlaceholder')}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:border-purple-500 focus:outline-none transition-colors"
+                        placeholder="例: 夏の京都旅行"
+                        className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-lg placeholder-white/30 focus:border-purple-500/50 focus:bg-white/[0.08] focus:outline-none transition-all"
                     />
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                {/* Photo dropzone */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
                     <PhotoDropzone
                         onFilesSelected={handleFilesSelected}
                         isProcessing={isProcessing}
@@ -162,20 +171,22 @@ export default function CreatePage() {
                     />
                 </motion.div>
 
+                {/* Error */}
                 <AnimatePresence>
                     {error && (
                         <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="p-4 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center gap-3"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-start gap-3"
                         >
-                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                            <p className="text-red-200 text-sm">{error}</p>
+                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-red-300 text-sm">{error}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
+                {/* Results */}
                 <AnimatePresence>
                     {processedPhotos.length > 0 && (
                         <motion.div
@@ -184,48 +195,76 @@ export default function CreatePage() {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-4"
                         >
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-white">
-                                    {t('create.photosReady', { count: processedPhotos.length })}
-                                </h3>
-                                <button
-                                    onClick={() => setProcessedPhotos([])}
-                                    className="text-sm text-white/50 hover:text-white transition-colors"
-                                >
-                                    {t('create.clearAll')}
-                                </button>
+                            {/* Success indicator */}
+                            <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 border border-green-500/20">
+                                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <Check className="w-5 h-5 text-green-400" />
+                                </div>
+                                <div>
+                                    <p className="text-white font-medium">{processedPhotos.length}枚の写真を読み込みました</p>
+                                    <p className="text-white/50 text-sm">
+                                        GPS付き: {processedPhotos.filter((p) => p.latitude).length}枚
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 p-4 bg-white/5 rounded-xl">
-                                <div className="text-center">
+                            {/* Stats */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="p-4 rounded-2xl bg-white/5 text-center">
                                     <p className="text-2xl font-bold text-white">{processedPhotos.length}</p>
-                                    <p className="text-xs text-white/50">{t('create.stats.photos')}</p>
+                                    <p className="text-xs text-white/50">写真</p>
                                 </div>
-                                <div className="text-center">
+                                <div className="p-4 rounded-2xl bg-white/5 text-center">
                                     <p className="text-2xl font-bold text-white">
                                         {processedPhotos.filter((p) => p.latitude).length}
                                     </p>
-                                    <p className="text-xs text-white/50">{t('create.stats.withGps')}</p>
+                                    <p className="text-xs text-white/50">GPS</p>
                                 </div>
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-white">
+                                <div className="p-4 rounded-2xl bg-white/5 text-center">
+                                    <p className="text-2xl font-bold text-purple-400">
                                         {calculateAchievements(processedPhotos).length}
                                     </p>
-                                    <p className="text-xs text-white/50">{t('create.stats.achievements')}</p>
+                                    <p className="text-xs text-white/50">実績</p>
                                 </div>
                             </div>
 
+                            {/* Clear button */}
                             <button
-                                onClick={handleCreateTrip}
-                                disabled={isProcessing || !tripName.trim()}
-                                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                type="button"
+                                onClick={() => setProcessedPhotos([])}
+                                className="w-full py-3 text-white/50 text-sm active:text-white transition-colors"
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
-                                {isProcessing ? t('create.creating') : t('create.createButton')}
+                                写真をクリア
                             </button>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* Bottom action bar */}
+            <AnimatePresence>
+                {processedPhotos.length > 0 && (
+                    <motion.div
+                        initial={{ y: 100 }}
+                        animate={{ y: 0 }}
+                        exit={{ y: 100 }}
+                        className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f] to-transparent"
+                    >
+                        <div className="max-w-lg mx-auto">
+                            <button
+                                type="button"
+                                onClick={handleCreateTrip}
+                                disabled={isProcessing || !tripName.trim()}
+                                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-semibold rounded-2xl active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
+                            >
+                                {isProcessing ? '作成中...' : '思い出を作成'}
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </main>
     );
 }
