@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Check, Loader2, AlertCircle } from 'lucide-react';
 import PhotoDropzone from '@/components/PhotoDropzone';
 import { processImages } from '@/lib/imageUtils';
 import { calculateAchievements, generateRouteFromPhotos, calculateTotalDistance, calculateDuration } from '@/lib/achievements';
@@ -17,8 +18,6 @@ export default function CreatePage() {
     const [error, setError] = useState<string | null>(null);
     const [processedPhotos, setProcessedPhotos] = useState<Photo[]>([]);
 
-    const handleBack = () => router.push('/');
-
     const handleFilesSelected = useCallback(async (files: File[]) => {
         setError(null);
         setIsProcessing(true);
@@ -29,14 +28,14 @@ export default function CreatePage() {
             });
 
             if (processed.length === 0) {
-                setError('ERROR: 処理失敗');
+                setError('写真を処理できませんでした');
                 setIsProcessing(false);
                 return;
             }
 
             const validPhotos = processed.filter((p) => p.timestamp !== null);
             if (validPhotos.length === 0) {
-                setError('ERROR: タイムスタンプなし');
+                setError('日付情報がありません');
                 setIsProcessing(false);
                 return;
             }
@@ -64,8 +63,8 @@ export default function CreatePage() {
                 setTripName(`${month}の旅`);
             }
         } catch (err) {
-            console.error('Processing error:', err);
-            setError('ERROR: 不明なエラー');
+            console.error(err);
+            setError('エラーが発生しました');
         } finally {
             setIsProcessing(false);
         }
@@ -75,8 +74,6 @@ export default function CreatePage() {
         if (processedPhotos.length === 0 || !tripName.trim()) return;
 
         setIsProcessing(true);
-        setError(null);
-
         try {
             const existingTrips = await getAllTrips();
             const isFirstTrip = existingTrips.length === 0;
@@ -87,8 +84,6 @@ export default function CreatePage() {
             const duration = calculateDuration(processedPhotos);
 
             const sorted = [...processedPhotos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-            const startDate = sorted[0].timestamp;
-            const endDate = sorted[sorted.length - 1].timestamp;
 
             const tripId = crypto.randomUUID();
             const trip: Trip = {
@@ -96,8 +91,8 @@ export default function CreatePage() {
                 name: tripName.trim(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                startDate,
-                endDate,
+                startDate: sorted[0].timestamp,
+                endDate: sorted[sorted.length - 1].timestamp,
                 route,
                 achievements,
                 totalPhotos: processedPhotos.length,
@@ -107,162 +102,123 @@ export default function CreatePage() {
             };
 
             await createTrip(trip);
-            const photosWithTripId = processedPhotos.map((p) => ({ ...p, tripId }));
-            await addPhotosToTrip(tripId, photosWithTripId);
+            await addPhotosToTrip(tripId, processedPhotos.map((p) => ({ ...p, tripId })));
 
             router.push(`/play/${tripId}`);
         } catch (err) {
-            console.error('Failed to create trip:', err);
-            setError('ERROR: 保存失敗');
+            console.error(err);
+            setError('保存に失敗');
             setIsProcessing(false);
         }
     };
 
     return (
-        <main
-            className="min-h-screen bg-black text-white relative overflow-hidden"
-            style={{ fontFamily: "'VT323', 'Courier New', monospace" }}
-        >
-            {/* VHS Effects */}
-            <div
-                className="fixed inset-0 pointer-events-none z-50 opacity-15"
-                style={{ background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.4) 2px, rgba(0,0,0,0.4) 4px)' }}
-            />
-
+        <main className="min-h-[100dvh] bg-black text-white flex flex-col">
             {/* Header */}
-            <header className="sticky top-0 z-40 bg-black/90 border-b-2 border-white/20 backdrop-blur-sm">
-                <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-4">
+            <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-lg border-b border-white/5">
+                <div className="px-4 py-3 flex items-center gap-3">
                     <button
-                        type="button"
-                        onClick={handleBack}
-                        className="border-2 border-white/50 px-4 py-2 text-sm tracking-widest hover:bg-white/10 active:scale-95 transition-all"
-                        style={{ WebkitTapHighlightColor: 'transparent' }}
+                        onClick={() => router.push('/')}
+                        className="p-2 -ml-2 rounded-full active:bg-white/10"
                     >
-                        ← BACK
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-lg tracking-widest">NEW RECORDING</h1>
-                        <p className="text-white/40 text-xs tracking-wider">新規記録</p>
+                        <h1 className="font-semibold">新しい記録</h1>
                     </div>
                 </div>
             </header>
 
             {/* Content */}
-            <div className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-40">
-                {/* Title input */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <label className="text-white/50 text-sm tracking-widest mb-2 block">TAPE LABEL</label>
+            <div className="flex-1 p-4 space-y-4 pb-32">
+                {/* Title */}
+                <div>
+                    <label className="text-xs text-white/40 mb-1 block">タイトル</label>
                     <input
                         type="text"
                         value={tripName}
                         onChange={(e) => setTripName(e.target.value)}
                         placeholder="例: 夏の京都旅行"
-                        className="w-full px-4 py-4 bg-black border-2 border-white/30 text-white text-xl tracking-wider placeholder-white/20 focus:border-amber-400 focus:outline-none transition-colors"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:border-violet-500 focus:outline-none"
                     />
-                </motion.div>
+                </div>
 
-                {/* Photo dropzone */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <PhotoDropzone
-                        onFilesSelected={handleFilesSelected}
-                        isProcessing={isProcessing}
-                        processingProgress={processingProgress}
-                    />
-                    <p className="text-white/30 text-sm mt-3 text-center tracking-wider">
-                        ※ 大量選択時は処理に時間がかかります
-                    </p>
-                </motion.div>
+                {/* Dropzone */}
+                <PhotoDropzone
+                    onFilesSelected={handleFilesSelected}
+                    isProcessing={isProcessing}
+                    processingProgress={processingProgress}
+                />
+
+                <p className="text-xs text-white/30 text-center">
+                    ※ 大量の写真は処理に時間がかかります
+                </p>
 
                 {/* Error */}
                 <AnimatePresence>
                     {error && (
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
-                            className="border-2 border-red-500 p-4 bg-red-500/10"
+                            className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2"
                         >
-                            <p className="text-red-500 text-lg tracking-wider">{error}</p>
+                            <AlertCircle className="w-4 h-4 text-red-400" />
+                            <p className="text-red-300 text-sm">{error}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Results */}
+                {/* Success */}
                 <AnimatePresence>
                     {processedPhotos.length > 0 && (
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="space-y-4"
+                            className="p-4 rounded-xl bg-green-500/10 border border-green-500/20"
                         >
-                            <div className="border-2 border-green-500/50 p-4 bg-green-500/5">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-4xl">✓</span>
-                                    <div>
-                                        <p className="text-green-400 text-xl tracking-wider">{processedPhotos.length} FRAMES LOADED</p>
-                                        <p className="text-white/50 text-sm">
-                                            GPS: {processedPhotos.filter((p) => p.latitude).length} •
-                                            予測実績: {calculateAchievements(processedPhotos).length}
-                                        </p>
-                                    </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <Check className="w-5 h-5 text-green-400" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-green-300">{processedPhotos.length}枚準備完了</p>
+                                    <p className="text-xs text-white/40">
+                                        GPS: {processedPhotos.filter(p => p.latitude).length}枚
+                                    </p>
                                 </div>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setProcessedPhotos([])}
-                                className="w-full py-3 text-white/40 text-sm tracking-wider hover:text-white transition-colors"
-                            >
-                                [CLEAR]
-                            </button>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* Record button */}
+            {/* Bottom Button */}
             <AnimatePresence>
                 {processedPhotos.length > 0 && (
                     <motion.div
                         initial={{ y: 100 }}
                         animate={{ y: 0 }}
                         exit={{ y: 100 }}
-                        className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-black via-black/95 to-transparent"
+                        className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-black via-black to-transparent"
                     >
-                        <div className="max-w-lg mx-auto">
-                            <button
-                                type="button"
-                                onClick={handleCreateTrip}
-                                disabled={isProcessing || !tripName.trim()}
-                                className="w-full py-5 border-4 border-red-500 bg-red-500/10 text-red-500 text-2xl tracking-[0.3em] hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-4"
-                                style={{ WebkitTapHighlightColor: 'transparent' }}
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>●</motion.span>
-                                        RECORDING...
-                                    </>
-                                ) : (
-                                    <>● REC</>
-                                )}
-                            </button>
-                        </div>
+                        <button
+                            onClick={handleCreateTrip}
+                            disabled={isProcessing || !tripName.trim()}
+                            className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 transition-all"
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    作成中...
+                                </>
+                            ) : (
+                                '記録を作成'
+                            )}
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* VHS Font */}
-            <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-      `}</style>
         </main>
     );
 }

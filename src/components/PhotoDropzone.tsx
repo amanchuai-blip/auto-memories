@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Camera, Loader2 } from 'lucide-react';
 
 interface PhotoDropzoneProps {
     onFilesSelected: (files: File[]) => void;
@@ -16,7 +17,7 @@ export default function PhotoDropzone({
 }: PhotoDropzoneProps) {
     const [isDragging, setIsDragging] = useState(false);
 
-    const handleButtonClick = () => {
+    const handleClick = () => {
         if (isProcessing) return;
 
         const input = document.createElement('input');
@@ -34,97 +35,60 @@ export default function PhotoDropzone({
         input.click();
     };
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!isProcessing) setIsDragging(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-        if (isProcessing) return;
-
-        const files = Array.from(e.dataTransfer.files).filter(file =>
-            file.type.startsWith('image/')
-        );
-
-        if (files.length > 0) {
-            onFilesSelected(files);
-        }
-    };
-
     return (
         <button
             type="button"
-            onClick={handleButtonClick}
+            onClick={handleClick}
             disabled={isProcessing}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`
-        w-full text-left relative overflow-hidden
-        border-4 ${isDragging ? 'border-amber-400 bg-amber-400/10' : 'border-dashed border-white/30'}
-        p-8 transition-all
-        ${isProcessing ? 'cursor-not-allowed' : 'cursor-pointer hover:border-white/50 active:bg-white/5'}
-      `}
-            style={{
-                WebkitTapHighlightColor: 'transparent',
+            onDragOver={(e) => { e.preventDefault(); if (!isProcessing) setIsDragging(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+            onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                if (isProcessing) return;
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                if (files.length > 0) onFilesSelected(files);
             }}
+            className={`
+        w-full rounded-2xl p-8 text-center transition-all border-2 border-dashed
+        ${isDragging ? 'border-violet-500 bg-violet-500/10' : 'border-white/20 bg-white/5'}
+        ${isProcessing ? 'cursor-wait' : 'cursor-pointer active:bg-white/10'}
+      `}
         >
             {isProcessing ? (
-                <div className="text-center space-y-4">
-                    {/* VHS Loading animation */}
-                    <div className="flex items-center justify-center gap-2">
-                        <motion.div
-                            animate={{ opacity: [1, 0.3, 1] }}
-                            transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-4xl text-amber-400"
-                        >
-                            ▶
-                        </motion.div>
-                        <span className="text-2xl text-white tracking-[0.3em]">LOADING</span>
+                <div className="space-y-4">
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                    >
+                        <Loader2 className="w-10 h-10 mx-auto text-violet-400" />
+                    </motion.div>
+                    <div>
+                        <p className="font-medium">処理中...</p>
+                        {processingProgress && (
+                            <>
+                                <p className="text-sm text-white/50 mt-1">
+                                    {processingProgress.current} / {processingProgress.total}
+                                </p>
+                                <div className="w-full h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
+                                    <motion.div
+                                        className="h-full bg-violet-500"
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(processingProgress.current / processingProgress.total) * 100}%` }}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
-
-                    {processingProgress && (
-                        <>
-                            <div className="w-full h-2 bg-white/10 overflow-hidden">
-                                <motion.div
-                                    className="h-full bg-amber-400"
-                                    initial={{ width: '0%' }}
-                                    animate={{
-                                        width: `${(processingProgress.current / processingProgress.total) * 100}%`,
-                                    }}
-                                />
-                            </div>
-                            <p className="text-white/50 text-lg tracking-wider">
-                                {processingProgress.current} / {processingProgress.total}
-                            </p>
-                        </>
-                    )}
                 </div>
             ) : (
-                <div className="text-center space-y-4">
-                    <div className="text-6xl">📼</div>
-                    <div>
-                        <p className="text-2xl text-white tracking-widest mb-2">
-                            {isDragging ? 'DROP HERE' : 'INSERT TAPE'}
-                        </p>
-                        <p className="text-white/40 text-sm tracking-wider">
-                            タップして写真を選択
-                        </p>
+                <div className="space-y-3">
+                    <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
+                        <Camera className="w-7 h-7 text-white/60" />
                     </div>
-                    <div className="flex items-center justify-center gap-3 text-xs text-white/30">
-                        <span className="border border-white/20 px-2 py-1">JPEG</span>
-                        <span className="border border-white/20 px-2 py-1">PNG</span>
-                        <span className="border border-white/20 px-2 py-1">HEIC</span>
+                    <div>
+                        <p className="font-medium">{isDragging ? 'ここにドロップ' : '写真を選択'}</p>
+                        <p className="text-sm text-white/40 mt-1">タップして選択</p>
                     </div>
                 </div>
             )}
