@@ -24,7 +24,7 @@ export default function PlayPage({ params }: PlayPageProps) {
                 <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full"
+                    className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full"
                 />
             </main>
         );
@@ -33,11 +33,11 @@ export default function PlayPage({ params }: PlayPageProps) {
     if (!trip) {
         return (
             <main className="min-h-[100dvh] bg-black flex items-center justify-center">
-                <div className="text-center p-6">
-                    <p className="text-white text-lg mb-4">見つかりません</p>
+                <div className="text-center p-8">
+                    <p className="text-white text-xl mb-5">見つかりません</p>
                     <button
                         onClick={() => router.push('/')}
-                        className="text-violet-400"
+                        className="text-violet-400 text-lg"
                     >
                         戻る
                     </button>
@@ -61,50 +61,50 @@ export default function PlayPage({ params }: PlayPageProps) {
         <main className="min-h-[100dvh] bg-black text-white">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-lg border-b border-white/5">
-                <div className="px-4 py-3 flex items-center gap-3">
+                <div className="px-5 py-4 flex items-center gap-4">
                     <button
                         onClick={() => router.push('/')}
-                        className="p-2 -ml-2 rounded-full active:bg-white/10"
+                        className="p-3 -ml-3 rounded-full active:bg-white/10"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-6 h-6" />
                     </button>
-                    <h1 className="font-semibold truncate">{trip.name}</h1>
+                    <h1 className="text-xl font-bold truncate">{trip.name}</h1>
                 </div>
             </header>
 
-            <div className="p-4 space-y-6">
+            <div className="p-5 space-y-6">
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-4 bg-white/5 rounded-xl">
-                        <p className="text-2xl font-bold">{trip.totalPhotos}</p>
-                        <p className="text-xs text-white/40">写真</p>
+                    <div className="text-center p-5 bg-white/5 rounded-2xl">
+                        <p className="text-3xl font-bold">{trip.totalPhotos}</p>
+                        <p className="text-base text-white/50 mt-1">写真</p>
                     </div>
-                    <div className="text-center p-4 bg-white/5 rounded-xl">
-                        <p className="text-2xl font-bold">{trip.totalDistance}</p>
-                        <p className="text-xs text-white/40">km</p>
+                    <div className="text-center p-5 bg-white/5 rounded-2xl">
+                        <p className="text-3xl font-bold">{trip.totalDistance}</p>
+                        <p className="text-base text-white/50 mt-1">km</p>
                     </div>
-                    <div className="text-center p-4 bg-white/5 rounded-xl">
-                        <p className="text-2xl font-bold">{trip.achievements.length}</p>
-                        <p className="text-xs text-white/40">実績</p>
+                    <div className="text-center p-5 bg-white/5 rounded-2xl">
+                        <p className="text-3xl font-bold">{trip.achievements.length}</p>
+                        <p className="text-base text-white/50 mt-1">実績</p>
                     </div>
                 </div>
 
                 {/* Achievements preview */}
                 {trip.achievements.length > 0 && (
                     <div>
-                        <p className="text-xs text-white/40 mb-2">獲得実績</p>
+                        <p className="text-base text-white/50 mb-3 font-medium">獲得実績</p>
                         <div className="flex flex-wrap gap-2">
                             {trip.achievements.slice(0, 6).map((a) => (
                                 <div
                                     key={a.id}
-                                    className="px-3 py-1.5 bg-white/5 rounded-full flex items-center gap-1.5"
+                                    className="px-4 py-2 bg-white/5 rounded-full flex items-center gap-2"
                                 >
-                                    <span>{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
-                                    <span className="text-xs">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
+                                    <span className="text-xl">{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
+                                    <span className="text-base">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
                                 </div>
                             ))}
                             {trip.achievements.length > 6 && (
-                                <div className="px-3 py-1.5 text-white/40 text-xs">
+                                <div className="px-4 py-2 text-white/40 text-base">
                                     +{trip.achievements.length - 6}
                                 </div>
                             )}
@@ -116,10 +116,10 @@ export default function PlayPage({ params }: PlayPageProps) {
                 <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setShowEndRoll(true)}
-                    className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-lg flex items-center justify-center gap-3"
+                    className="w-full py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl font-bold text-xl flex items-center justify-center gap-3"
                 >
-                    <Play className="w-6 h-6" />
-                    再生
+                    <Play className="w-7 h-7" />
+                    再生する
                 </motion.button>
             </div>
         </main>

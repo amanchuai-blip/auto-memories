@@ -116,30 +116,30 @@ export default function CreatePage() {
         <main className="min-h-[100dvh] bg-black text-white flex flex-col">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-lg border-b border-white/5">
-                <div className="px-4 py-3 flex items-center gap-3">
+                <div className="px-5 py-4 flex items-center gap-4">
                     <button
                         onClick={() => router.push('/')}
-                        className="p-2 -ml-2 rounded-full active:bg-white/10"
+                        className="p-3 -ml-3 rounded-full active:bg-white/10"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-6 h-6" />
                     </button>
                     <div>
-                        <h1 className="font-semibold">新しい記録</h1>
+                        <h1 className="text-xl font-bold">新しい記録</h1>
                     </div>
                 </div>
             </header>
 
             {/* Content */}
-            <div className="flex-1 p-4 space-y-4 pb-32">
+            <div className="flex-1 p-5 space-y-5 pb-36">
                 {/* Title */}
                 <div>
-                    <label className="text-xs text-white/40 mb-1 block">タイトル</label>
+                    <label className="text-base text-white/60 mb-2 block font-medium">タイトル</label>
                     <input
                         type="text"
                         value={tripName}
                         onChange={(e) => setTripName(e.target.value)}
                         placeholder="例: 夏の京都旅行"
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:border-violet-500 focus:outline-none"
+                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-lg placeholder-white/30 focus:border-violet-500 focus:outline-none"
                     />
                 </div>
 
@@ -150,7 +150,7 @@ export default function CreatePage() {
                     processingProgress={processingProgress}
                 />
 
-                <p className="text-xs text-white/30 text-center">
+                <p className="text-base text-white/40 text-center">
                     ※ 大量の写真は処理に時間がかかります
                 </p>
 
@@ -161,10 +161,10 @@ export default function CreatePage() {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
-                            className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2"
+                            className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3"
                         >
-                            <AlertCircle className="w-4 h-4 text-red-400" />
-                            <p className="text-red-300 text-sm">{error}</p>
+                            <AlertCircle className="w-6 h-6 text-red-400" />
+                            <p className="text-red-300 text-base">{error}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -175,15 +175,15 @@ export default function CreatePage() {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-4 rounded-xl bg-green-500/10 border border-green-500/20"
+                            className="p-5 rounded-2xl bg-green-500/10 border border-green-500/20"
                         >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <Check className="w-5 h-5 text-green-400" />
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <Check className="w-7 h-7 text-green-400" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-green-300">{processedPhotos.length}枚準備完了</p>
-                                    <p className="text-xs text-white/40">
+                                    <p className="font-bold text-green-300 text-xl">{processedPhotos.length}枚準備完了</p>
+                                    <p className="text-base text-white/50 mt-1">
                                         GPS: {processedPhotos.filter(p => p.latitude).length}枚
                                     </p>
                                 </div>
@@ -200,16 +200,16 @@ export default function CreatePage() {
                         initial={{ y: 100 }}
                         animate={{ y: 0 }}
                         exit={{ y: 100 }}
-                        className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-black via-black to-transparent"
+                        className="fixed bottom-0 left-0 right-0 p-5 pb-10 bg-gradient-to-t from-black via-black to-transparent"
                     >
                         <button
                             onClick={handleCreateTrip}
                             disabled={isProcessing || !tripName.trim()}
-                            className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 transition-all"
+                            className="w-full py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 transition-all"
                         >
                             {isProcessing ? (
                                 <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <Loader2 className="w-6 h-6 animate-spin" />
                                     作成中...
                                 </>
                             ) : (
