@@ -67,7 +67,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
     useEffect(() => {
         const player = getAudioPlayer();
         player.initialize().then(() => {
-            player.loadAudio('/audio/placeholder-bgm.mp3').catch(() => {
+            player.loadAudio('/audio/bgm.mp3').catch(() => {
                 console.warn('BGM not loaded');
             });
         });
