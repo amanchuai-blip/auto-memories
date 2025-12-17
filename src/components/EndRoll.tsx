@@ -7,12 +7,9 @@ import type { Photo, Trip } from '@/types';
 import { ACHIEVEMENT_DEFINITIONS } from '@/types';
 import {
     generatePhotoNarrative,
-    calculateSpeed,
     calculateCumulativeDistance,
     getTimeGapLabel,
-    generateKenBurnsParams,
 } from '@/lib/storyGenerator';
-import { Play, Pause, Volume2, VolumeX, X, SkipForward, ChevronRight } from 'lucide-react';
 
 const MapView = dynamic(() => import('./MapView'), { ssr: false });
 
@@ -28,15 +25,11 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
     const achievements = trip.achievements;
 
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [phase, setPhase] = useState<'intro' | 'journey' | 'credits' | 'complete'>('intro');
+    const [phase, setPhase] = useState<'intro' | 'journey' | 'credits'>('intro');
     const [isPlaying, setIsPlaying] = useState(true);
-    const [isMuted, setIsMuted] = useState(false);
-    const [showControls, setShowControls] = useState(true);
-    const [audioReady, setAudioReady] = useState(false);
-    const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [showGlitch, setShowGlitch] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Sort photos by timestamp
     const sortedPhotos = useMemo(() =>
         [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
         [photos]
@@ -44,89 +37,57 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
 
     const currentPhoto = sortedPhotos[currentIndex];
     const prevPhoto = currentIndex > 0 ? sortedPhotos[currentIndex - 1] : null;
-
-    // Stats
-    const currentSpeed = prevPhoto && currentPhoto ? calculateSpeed(prevPhoto, currentPhoto) : 0;
     const cumulativeDistance = calculateCumulativeDistance(sortedPhotos, currentIndex);
     const timeGapLabel = prevPhoto && currentPhoto ? getTimeGapLabel(prevPhoto, currentPhoto) : null;
     const narrative = currentPhoto
         ? generatePhotoNarrative(currentPhoto, prevPhoto, currentIndex, sortedPhotos.length)
         : '';
-    const kenBurns = generateKenBurnsParams(currentIndex);
 
-    // Initialize audio with user interaction (iOS compatible)
-    const initAudio = useCallback(() => {
-        if (audioRef.current || audioReady) return;
+    // VHS timestamp format
+    const formatVHSTime = (date: Date) => {
+        return date.toLocaleString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        }).replace(/\//g, '.').replace(/ /, ' ');
+    };
 
-        const audio = new Audio('/audio/bgm.mp3');
-        audio.loop = true;
-        audio.volume = 0.6;
-        audioRef.current = audio;
-
-        audio.play().then(() => {
-            setAudioReady(true);
-        }).catch(() => {
-            // iOS requires user interaction - will try again
-            console.log('Audio needs user interaction');
-        });
-    }, [audioReady]);
-
-    // Try to play audio on mount and interaction
+    // Audio init
     useEffect(() => {
-        const handleInteraction = () => {
-            if (!audioReady) {
-                initAudio();
-            }
+        const initAudio = () => {
+            if (audioRef.current) return;
+            const audio = new Audio('/audio/bgm.mp3');
+            audio.loop = true;
+            audio.volume = 0.5;
+            audioRef.current = audio;
+            audio.play().catch(() => { });
         };
 
-        window.addEventListener('touchstart', handleInteraction, { once: true });
-        window.addEventListener('click', handleInteraction, { once: true });
-
-        // Try immediately
+        window.addEventListener('touchstart', initAudio, { once: true });
+        window.addEventListener('click', initAudio, { once: true });
         initAudio();
 
         return () => {
-            window.removeEventListener('touchstart', handleInteraction);
-            window.removeEventListener('click', handleInteraction);
             if (audioRef.current) {
                 audioRef.current.pause();
                 audioRef.current = null;
             }
         };
-    }, [initAudio, audioReady]);
+    }, []);
 
-    // Control audio playback
+    // Glitch on photo change
     useEffect(() => {
-        if (!audioRef.current) return;
-
-        if (isPlaying && !isMuted) {
-            audioRef.current.play().catch(() => { });
-        } else {
-            audioRef.current.pause();
-        }
-    }, [isPlaying, isMuted]);
-
-    // Mute control
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.muted = isMuted;
-        }
-    }, [isMuted]);
-
-    // Auto-hide controls
-    useEffect(() => {
-        if (showControls) {
-            controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 4000);
-        }
-        return () => {
-            if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-        };
-    }, [showControls]);
+        setShowGlitch(true);
+        const t = setTimeout(() => setShowGlitch(false), 200);
+        return () => clearTimeout(t);
+    }, [currentIndex]);
 
     // Phase progression
     useEffect(() => {
         if (!isPlaying) return;
-
         let timeout: NodeJS.Timeout;
 
         switch (phase) {
@@ -135,64 +96,108 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 break;
             case 'journey':
                 if (currentIndex < sortedPhotos.length - 1) {
-                    const delay = timeGapLabel ? 5500 : 4500;
+                    const delay = timeGapLabel ? 5000 : 4000;
                     timeout = setTimeout(() => setCurrentIndex(i => i + 1), delay);
                 } else {
                     timeout = setTimeout(() => setPhase('credits'), 2000);
                 }
                 break;
             case 'credits':
-                timeout = setTimeout(() => {
-                    setPhase('complete');
-                    onComplete?.();
-                }, 12000);
+                timeout = setTimeout(() => onComplete?.(), 10000);
                 break;
         }
 
         return () => { if (timeout) clearTimeout(timeout); };
     }, [phase, isPlaying, currentIndex, sortedPhotos.length, timeGapLabel, onComplete]);
 
-    const handleInteraction = useCallback(() => {
-        setShowControls(true);
-        initAudio();
-    }, [initAudio]);
-
     const handleExit = useCallback(() => {
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
+        if (audioRef.current) audioRef.current.pause();
         onExit?.();
     }, [onExit]);
 
-    const skipToCredits = useCallback(() => {
-        setPhase('credits');
-    }, []);
-
-    // Get photo URL
     const photoUrl = currentPhoto ? URL.createObjectURL(currentPhoto.blob) : '';
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#0a0a0f] z-50 overflow-hidden"
-            onMouseMove={handleInteraction}
-            onTouchStart={handleInteraction}
-        >
-            {/* Film grain effect */}
+        <div className="fixed inset-0 z-50 bg-black overflow-hidden" style={{ fontFamily: "'VT323', 'Courier New', monospace" }}>
+            {/* VHS Scan Lines */}
             <div
-                className="absolute inset-0 z-50 pointer-events-none opacity-[0.03] mix-blend-overlay"
+                className="absolute inset-0 z-40 pointer-events-none opacity-20"
                 style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+                    background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)',
                 }}
             />
 
-            {/* Cinematic bars */}
-            <div className="absolute top-0 left-0 right-0 h-[6vh] bg-black z-40" />
-            <div className="absolute bottom-0 left-0 right-0 h-[6vh] bg-black z-40" />
+            {/* VHS Noise */}
+            <div
+                className="absolute inset-0 z-40 pointer-events-none opacity-[0.08] mix-blend-overlay"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+                    animation: 'noise 0.5s steps(10) infinite',
+                }}
+            />
 
-            {/* INTRO PHASE */}
+            {/* VHS Tracking Glitch */}
+            <AnimatePresence>
+                {showGlitch && (
+                    <motion.div
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: [1, 0.5, 1, 0.3, 1] }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-45 pointer-events-none"
+                        style={{
+                            background: 'linear-gradient(180deg, transparent 90%, rgba(255,255,255,0.1) 92%, transparent 94%)',
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* REC Indicator */}
+            <div className="absolute top-4 left-4 z-50 flex items-center gap-2">
+                <motion.div
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="w-3 h-3 rounded-full bg-red-600"
+                />
+                <span className="text-red-500 text-lg font-bold tracking-wider">● REC</span>
+            </div>
+
+            {/* VHS Timestamp */}
+            {currentPhoto && phase === 'journey' && (
+                <div className="absolute bottom-20 right-4 z-50 text-right">
+                    <p className="text-amber-400 text-xl tracking-wider drop-shadow-lg" style={{ textShadow: '2px 2px 0 #000' }}>
+                        {formatVHSTime(currentPhoto.timestamp)}
+                    </p>
+                    <p className="text-amber-400/70 text-sm mt-1">
+                        {cumulativeDistance} KM
+                    </p>
+                </div>
+            )}
+
+            {/* Cancel Button - Always visible */}
+            <button
+                onClick={handleExit}
+                className="absolute top-4 right-4 z-50 px-4 py-2 bg-black/80 border-2 border-white/50 text-white text-sm uppercase tracking-widest hover:bg-white/20 active:scale-95 transition-all"
+            >
+                ■ STOP
+            </button>
+
+            {/* Play/Pause */}
+            <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="absolute bottom-4 left-4 z-50 px-4 py-2 bg-black/80 border-2 border-white/50 text-white text-sm uppercase tracking-widest hover:bg-white/20 active:scale-95 transition-all"
+            >
+                {isPlaying ? '❚❚ PAUSE' : '▶ PLAY'}
+            </button>
+
+            {/* Skip Button */}
+            <button
+                onClick={() => setPhase('credits')}
+                className="absolute bottom-4 right-4 z-50 px-4 py-2 bg-black/80 border-2 border-white/50 text-white text-sm uppercase tracking-widest hover:bg-white/20 active:scale-95 transition-all"
+            >
+                ▶▶ SKIP
+            </button>
+
+            {/* INTRO */}
             <AnimatePresence>
                 {phase === 'intro' && (
                     <motion.div
@@ -201,29 +206,36 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 flex items-center justify-center z-30"
                     >
-                        <div className="text-center px-8">
-                            <motion.h1
-                                initial={{ opacity: 0, y: 40, scale: 0.9 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ delay: 0.3, duration: 0.8 }}
-                                className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-4"
+                        <div className="text-center">
+                            <motion.div
+                                initial={{ scaleY: 0 }}
+                                animate={{ scaleY: 1 }}
+                                transition={{ duration: 0.3 }}
+                                className="border-4 border-white/80 p-8 bg-black/50"
                             >
-                                {trip.name}
-                            </motion.h1>
-                            <motion.p
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 0.5 }}
-                                transition={{ delay: 1, duration: 0.6 }}
-                                className="text-white/50 tracking-widest text-sm uppercase"
-                            >
-                                {trip.totalPhotos} photos • {trip.totalDistance} km
-                            </motion.p>
+                                <motion.h1
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="text-4xl md:text-6xl text-white tracking-widest mb-4"
+                                >
+                                    {trip.name}
+                                </motion.h1>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 1 }}
+                                    className="text-amber-400 text-xl tracking-wider"
+                                >
+                                    {trip.startDate?.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                </motion.div>
+                            </motion.div>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* JOURNEY PHASE */}
+            {/* JOURNEY - Map + Photo */}
             <AnimatePresence>
                 {phase === 'journey' && currentPhoto && (
                     <motion.div
@@ -232,7 +244,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 z-20"
                     >
-                        {/* Background Map */}
+                        {/* Full screen Map */}
                         <div className="absolute inset-0">
                             <MapView
                                 route={route}
@@ -240,7 +252,6 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 currentPointIndex={Math.min(currentIndex, route.length - 1)}
                                 className="w-full h-full"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/70" />
                         </div>
 
                         {/* Time Gap Overlay */}
@@ -250,309 +261,147 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="absolute inset-0 flex items-center justify-center z-35 bg-black/70"
+                                    className="absolute inset-0 flex items-center justify-center z-35 bg-black/80"
                                 >
-                                    <motion.p
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="text-4xl md:text-6xl font-light text-white tracking-widest"
-                                    >
-                                        {timeGapLabel}
-                                    </motion.p>
+                                    <div className="border-4 border-white/60 px-12 py-6">
+                                        <p className="text-4xl text-white tracking-[0.5em]">{timeGapLabel}</p>
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
-                        {/* Main Photo with Ken Burns */}
+                        {/* Photo - PiP style in corner */}
                         <motion.div
                             key={currentPhoto.id}
-                            initial={{ opacity: 0, scale: 1.1 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="absolute inset-[8%] md:right-[10%] md:left-auto md:w-[50%] rounded-2xl overflow-hidden shadow-2xl z-25"
-                            style={{
-                                boxShadow: '0 30px 100px rgba(0,0,0,0.8)',
-                            }}
+                            initial={{ opacity: 0, scale: 0.8, rotate: -2 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.4 }}
+                            className="absolute top-16 right-4 w-[45%] md:w-[35%] aspect-[4/3] z-30"
                         >
-                            <motion.div
-                                initial={{
-                                    scale: kenBurns.startScale,
-                                    x: `${kenBurns.startX}%`,
-                                    y: `${kenBurns.startY}%`,
-                                }}
-                                animate={{
-                                    scale: kenBurns.endScale,
-                                    x: `${kenBurns.endX}%`,
-                                    y: `${kenBurns.endY}%`,
-                                }}
-                                transition={{ duration: 4.5, ease: 'linear' }}
-                                className="w-full h-full"
-                            >
-                                <img
-                                    src={photoUrl}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                />
-                            </motion.div>
-
-                            {/* Vignette */}
-                            <div className="absolute inset-0 pointer-events-none" style={{
-                                background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%)',
-                            }} />
+                            {/* Photo frame - VHS style */}
+                            <div className="w-full h-full bg-black p-1 border-4 border-white/30 shadow-2xl">
+                                <div className="w-full h-full overflow-hidden relative">
+                                    <motion.img
+                                        src={photoUrl}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        initial={{ scale: 1.1 }}
+                                        animate={{ scale: 1.2, x: [-5, 5, -5], y: [-3, 3, -3] }}
+                                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                        style={{ filter: 'saturate(0.9) contrast(1.1)' }}
+                                    />
+                                    {/* VHS color aberration */}
+                                    <div className="absolute inset-0 pointer-events-none" style={{
+                                        background: 'linear-gradient(90deg, rgba(255,0,0,0.05) 0%, transparent 5%, transparent 95%, rgba(0,255,255,0.05) 100%)',
+                                    }} />
+                                </div>
+                            </div>
                         </motion.div>
 
-                        {/* Left side info */}
-                        <div className="absolute left-[5%] top-[15%] bottom-[20%] w-[35%] hidden md:flex flex-col justify-between z-25">
-                            {/* Stats */}
-                            <div className="space-y-3">
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-sm"
-                                >
-                                    <span className="text-2xl">🗺️</span>
-                                    <div>
-                                        <p className="text-xl font-bold text-white">{cumulativeDistance} km</p>
-                                        <p className="text-xs text-white/40">移動距離</p>
-                                    </div>
-                                </motion.div>
+                        {/* Narrative - Bottom left */}
+                        <motion.div
+                            key={`narrative-${currentIndex}`}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="absolute bottom-24 left-4 right-[50%] z-30 bg-black/70 p-4 border-l-4 border-amber-400"
+                        >
+                            <p className="text-white text-lg leading-relaxed">
+                                {narrative}
+                            </p>
+                            <p className="text-amber-400/60 text-sm mt-2">
+                                {currentIndex + 1} / {sortedPhotos.length}
+                            </p>
+                        </motion.div>
 
-                                {currentSpeed > 0 && (
-                                    <motion.div
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.1 }}
-                                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-sm"
-                                    >
-                                        <span className="text-2xl">⚡</span>
-                                        <div>
-                                            <p className="text-xl font-bold text-white">{currentSpeed} km/h</p>
-                                            <p className="text-xs text-white/40">速度</p>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </div>
-
-                            {/* Narrative */}
-                            <motion.div
-                                key={`narrative-${currentIndex}`}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="space-y-2"
-                            >
-                                <p className="text-xl md:text-2xl font-light text-white leading-relaxed">
-                                    {narrative}
-                                </p>
-                                <p className="text-white/30 text-sm">
-                                    {currentPhoto.timestamp.toLocaleString('ja-JP', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                    })}
-                                </p>
-                            </motion.div>
-                        </div>
-
-                        {/* Progress bar */}
-                        <div className="absolute bottom-[8%] left-[5%] right-[5%] z-25">
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                                    <motion.div
-                                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                                        initial={{ width: '0%' }}
-                                        animate={{ width: `${((currentIndex + 1) / sortedPhotos.length) * 100}%` }}
-                                    />
-                                </div>
-                                <p className="text-xs text-white/40 tabular-nums">
-                                    {currentIndex + 1}/{sortedPhotos.length}
-                                </p>
+                        {/* Counter overlay */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+                            <div className="bg-black/80 px-6 py-2 border border-white/30">
+                                <span className="text-white text-2xl tracking-[0.3em]">
+                                    {String(currentIndex + 1).padStart(3, '0')}
+                                </span>
                             </div>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* CREDITS PHASE - with achievements */}
+            {/* CREDITS - VHS Style */}
             <AnimatePresence>
                 {phase === 'credits' && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex items-center justify-center z-30"
+                        className="absolute inset-0 flex items-center justify-center z-30 bg-black"
                     >
                         <motion.div
-                            className="text-center max-w-lg px-8"
-                            initial={{ y: 50 }}
-                            animate={{ y: 0 }}
-                            transition={{ duration: 1 }}
+                            initial={{ y: '100%' }}
+                            animate={{ y: '-100%' }}
+                            transition={{ duration: 15, ease: 'linear' }}
+                            className="text-center"
                         >
-                            <motion.h2
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-4xl md:text-5xl font-bold text-white mb-8"
-                            >
-                                {trip.name}
-                            </motion.h2>
+                            <div className="h-[50vh]" />
 
-                            {/* Stats */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.5 }}
-                                className="grid grid-cols-3 gap-6 mb-10"
-                            >
-                                <div>
-                                    <p className="text-3xl font-bold text-white">{trip.totalPhotos}</p>
-                                    <p className="text-xs text-white/40 uppercase tracking-wider">写真</p>
-                                </div>
-                                <div>
-                                    <p className="text-3xl font-bold text-white">{trip.totalDistance}</p>
-                                    <p className="text-xs text-white/40 uppercase tracking-wider">km</p>
-                                </div>
-                                <div>
-                                    <p className="text-3xl font-bold text-purple-400">{achievements.length}</p>
-                                    <p className="text-xs text-white/40 uppercase tracking-wider">実績</p>
-                                </div>
-                            </motion.div>
+                            <div className="border-4 border-white/60 p-8 mb-12">
+                                <h2 className="text-5xl text-white tracking-widest mb-4">{trip.name}</h2>
+                                <p className="text-amber-400 text-xl">THE END</p>
+                            </div>
 
-                            {/* Achievements - only shown here */}
+                            <div className="grid grid-cols-3 gap-8 mb-12 text-white">
+                                <div>
+                                    <p className="text-4xl">{trip.totalPhotos}</p>
+                                    <p className="text-sm text-white/50 tracking-widest">PHOTOS</p>
+                                </div>
+                                <div>
+                                    <p className="text-4xl">{trip.totalDistance}</p>
+                                    <p className="text-sm text-white/50 tracking-widest">KM</p>
+                                </div>
+                                <div>
+                                    <p className="text-4xl">{achievements.length}</p>
+                                    <p className="text-sm text-white/50 tracking-widest">ACHIEVEMENTS</p>
+                                </div>
+                            </div>
+
+                            {/* Achievements - ONLY here */}
                             {achievements.length > 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 1 }}
-                                    className="mb-10"
-                                >
-                                    <p className="text-xs text-white/40 uppercase tracking-widest mb-4">獲得実績</p>
-                                    <div className="flex flex-wrap justify-center gap-3">
-                                        {achievements.map((a, i) => (
-                                            <motion.div
-                                                key={a.id}
-                                                initial={{ opacity: 0, scale: 0 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: 1.2 + i * 0.1 }}
-                                                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 backdrop-blur-sm"
-                                            >
-                                                <span className="text-lg">{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
-                                                <span className="text-sm text-white/70">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
-                                            </motion.div>
+                                <div className="mb-12">
+                                    <p className="text-white/50 text-sm tracking-widest mb-6">UNLOCKED</p>
+                                    <div className="flex flex-wrap justify-center gap-4">
+                                        {achievements.map(a => (
+                                            <div key={a.id} className="border-2 border-white/30 px-4 py-2 bg-black/50">
+                                                <span className="text-2xl mr-2">{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
+                                                <span className="text-white text-sm">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
+                                            </div>
                                         ))}
                                     </div>
-                                </motion.div>
+                                </div>
                             )}
 
-                            {/* Branding */}
-                            <motion.p
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 0.3 }}
-                                transition={{ delay: 2 }}
-                                className="text-xs tracking-[0.3em] uppercase"
-                            >
-                                Auto Memories
-                            </motion.p>
+                            <p className="text-white/30 text-sm tracking-[0.5em]">AUTO MEMORIES</p>
+
+                            <div className="h-[50vh]" />
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* COMPLETE PHASE */}
-            <AnimatePresence>
-                {phase === 'complete' && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="absolute inset-0 flex items-center justify-center z-30"
-                    >
-                        <div className="text-center">
-                            <motion.p
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-2xl text-white/60 mb-8 tracking-widest"
-                            >
-                                おわり
-                            </motion.p>
-                            <motion.button
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                                onClick={handleExit}
-                                className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full text-white flex items-center gap-2 mx-auto transition-colors"
-                            >
-                                ホームに戻る
-                                <ChevronRight className="w-4 h-4" />
-                            </motion.button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Controls */}
-            <AnimatePresence>
-                {showControls && phase !== 'complete' && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        className="absolute bottom-0 left-0 right-0 p-4 pb-[8vh] z-50"
-                    >
-                        <div className="flex items-center justify-between max-w-xl mx-auto">
-                            {/* Play/Pause */}
-                            <button
-                                onClick={() => setIsPlaying(!isPlaying)}
-                                className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors"
-                            >
-                                {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white" />}
-                            </button>
-
-                            {/* Phase indicators */}
-                            <div className="flex gap-2">
-                                {['intro', 'journey', 'credits'].map((p) => (
-                                    <div
-                                        key={p}
-                                        className={`w-2 h-2 rounded-full transition-colors ${p === phase ? 'bg-white' : 'bg-white/20'}`}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Right controls */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={skipToCredits}
-                                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors"
-                                    title="スキップ"
-                                >
-                                    <SkipForward className="w-5 h-5 text-white" />
-                                </button>
-                                <button
-                                    onClick={() => setIsMuted(!isMuted)}
-                                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors"
-                                >
-                                    {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
-                                </button>
-                                <button
-                                    onClick={handleExit}
-                                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors"
-                                    title="キャンセル"
-                                >
-                                    <X className="w-5 h-5 text-white" />
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Audio indicator */}
-            {!audioReady && (
-                <div className="absolute top-[8vh] left-1/2 -translate-x-1/2 z-50">
-                    <p className="text-xs text-white/40 bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                        タップで音楽再生
-                    </p>
-                </div>
-            )}
-        </motion.div>
+            {/* CSS Animations */}
+            <style jsx global>{`
+        @keyframes noise {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-1%, -1%); }
+          20% { transform: translate(1%, 1%); }
+          30% { transform: translate(-1%, 1%); }
+          40% { transform: translate(1%, -1%); }
+          50% { transform: translate(-1%, 0%); }
+          60% { transform: translate(1%, 0%); }
+          70% { transform: translate(0%, 1%); }
+          80% { transform: translate(0%, -1%); }
+          90% { transform: translate(1%, 1%); }
+        }
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+      `}</style>
+        </div>
     );
 }
