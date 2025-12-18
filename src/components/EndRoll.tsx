@@ -119,10 +119,10 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 }, 15000);
                 break;
             case 'afterglow':
-                // Slowly cycle through photos in background
+                // Slowly cycle through photos in background - loop forever until user exits
                 timeout = setTimeout(() => {
                     setAfterglowPhotoIndex(i => (i + 1) % sortedPhotos.length);
-                }, 3000);
+                }, 6000);
                 break;
         }
 
