@@ -431,14 +431,14 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                     >
                         {/* Scrolling credits container */}
                         <motion.div
-                            initial={{ y: '100%' }}
-                            animate={{ y: '-100%' }}
+                            initial={{ y: '30%' }}
+                            animate={{ y: '-150%' }}
                             transition={{ duration: 20, ease: 'linear' }}
                             style={{
                                 position: 'absolute',
                                 left: 0,
                                 right: 0,
-                                top: '100%',
+                                top: '30%',
                                 textAlign: 'center',
                                 padding: '0 32px',
                             }}
