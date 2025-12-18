@@ -72,21 +72,21 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
             case 'grid':
                 timeout = setTimeout(() => {
                     setGridZoomTarget(0);
-                    setTimeout(() => setPhase('journey'), 800);
-                }, 1000);
+                    setTimeout(() => setPhase('journey'), 2000);
+                }, 8000);
                 break;
             case 'journey':
                 if (currentIndex < sortedPhotos.length - 1) {
-                    timeout = setTimeout(() => setCurrentIndex(i => i + 1), 2000);
+                    timeout = setTimeout(() => setCurrentIndex(i => i + 1), 4000);
                 } else {
-                    timeout = setTimeout(() => setPhase('montage'), 1000);
+                    timeout = setTimeout(() => setPhase('montage'), 800);
                 }
                 break;
             case 'montage':
                 if (montageIndex < sortedPhotos.length - 1) {
-                    timeout = setTimeout(() => setMontageIndex(i => i + 1), 400);
+                    timeout = setTimeout(() => setMontageIndex(i => i + 1), 200);
                 } else {
-                    timeout = setTimeout(() => setPhase('credits'), 800);
+                    timeout = setTimeout(() => setPhase('credits'), 500);
                 }
                 break;
             case 'credits':
@@ -433,7 +433,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         <motion.div
                             initial={{ y: '100%' }}
                             animate={{ y: '-100%' }}
-                            transition={{ duration: 12, ease: 'linear' }}
+                            transition={{ duration: 20, ease: 'linear' }}
                             style={{
                                 position: 'absolute',
                                 left: 0,

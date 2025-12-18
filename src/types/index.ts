@@ -16,6 +16,9 @@ export type AchievementType =
     | 'long_weekend'      // Trip spans 3+ consecutive days
     | 'week_traveler'     // Trip spans 7+ days
     | 'month_adventurer'  // Trip spans 30+ days
+    | 'morning_person'    // Most photos before noon
+    | 'afternoon_chill'   // Most photos 12:00-18:00
+    | 'night_shooter'     // Most photos after 18:00
 
     // Photo behavior
     | 'machine_gun'       // >10 photos in 1 minute
@@ -24,6 +27,13 @@ export type AchievementType =
     | 'paparazzi'         // 500+ photos in trip
     | 'one_shot'          // Only 1 photo in trip
     | 'time_lapse_master' // Photos at regular intervals
+    | 'duo'               // Exactly 2 photos
+    | 'trio'              // Exactly 3 photos
+    | 'handful'           // Exactly 5 photos
+    | 'dozen'             // 12 photos
+    | 'twenty'            // 20 photos
+    | 'thirty'            // 30 photos
+    | 'fifty'             // 50 photos
 
     // Location & Geography
     | 'mountain_hiker'    // Elevation gain > 500m
@@ -34,6 +44,19 @@ export type AchievementType =
     | 'border_crosser'    // Large GPS coordinate jump (different region)
     | 'circle_back'       // Start and end within 100m
     | 'straight_line'     // Route forms nearly straight path
+    | 'short_trip'        // Total distance < 1km
+    | 'medium_trip'       // Total distance 1-10km
+    | 'long_trip'         // Total distance 10-50km
+    | 'ultra_trip'        // Total distance > 50km
+
+    // Day of week
+    | 'monday_blues'      // Trip on Monday
+    | 'tuesday_vibes'     // Trip on Tuesday
+    | 'hump_day'          // Trip on Wednesday
+    | 'thursday_mood'     // Trip on Thursday
+    | 'friday_feeling'    // Trip on Friday
+    | 'saturday_fun'      // Trip on Saturday
+    | 'sunday_chill'      // Trip on Sunday
 
     // Special conditions
     | 'weather_master'    // Mock: varied weather
@@ -47,6 +70,11 @@ export type AchievementType =
     | 'prime_time'        // Photo count is prime number
     | 'perfect_timing'    // Photo taken at :00:00 seconds
     | 'triple_digit'      // 3 consecutive photos within same minute
+    | 'quick_snap'        // Trip under 10 minutes
+    | 'hour_journey'      // Trip 1-2 hours
+    | 'half_day'          // Trip 3-6 hours
+    | 'full_day'          // Trip 6-12 hours
+    | 'multi_day'         // Trip > 24 hours
 
 export interface Achievement {
     id: string;
@@ -134,32 +162,32 @@ export const ACHIEVEMENT_DEFINITIONS: Record<AchievementType, AchievementDefinit
     teleporter: {
         type: 'teleporter',
         icon: '🚄',
-        title: 'Teleporter',
-        description: 'Warped through space at incredible speed',
+        title: '高速移動',
+        description: '超高速で移動した',
         color: '#8B5CF6',
         rarity: 'uncommon',
     },
     slowpoke: {
         type: 'slowpoke',
         icon: '🐢',
-        title: 'Slowpoke',
-        description: 'Took your sweet time',
+        title: 'のんびり屋',
+        description: 'ゆっくり楽しんだ',
         color: '#84CC16',
         rarity: 'rare',
     },
     marathon_runner: {
         type: 'marathon_runner',
         icon: '🏃',
-        title: 'Marathon Runner',
-        description: 'Traveled marathon distance on foot',
+        title: 'マラソンランナー',
+        description: '42km以上移動',
         color: '#EF4444',
         rarity: 'epic',
     },
     jet_setter: {
         type: 'jet_setter',
         icon: '✈️',
-        title: 'Jet Setter',
-        description: 'Flew through the skies',
+        title: '空の旅人',
+        description: '飛行機で移動',
         color: '#0EA5E9',
         rarity: 'rare',
     },
@@ -168,271 +196,481 @@ export const ACHIEVEMENT_DEFINITIONS: Record<AchievementType, AchievementDefinit
     early_bird: {
         type: 'early_bird',
         icon: '🌅',
-        title: 'Early Bird',
-        description: 'Caught the morning light',
+        title: '早起き',
+        description: '朝5-7時に撮影',
         color: '#F59E0B',
         rarity: 'common',
     },
     night_owl: {
         type: 'night_owl',
         icon: '🦉',
-        title: 'Night Owl',
-        description: 'Explored the midnight hours',
+        title: '夜ふかし',
+        description: '深夜2-4時に撮影',
         color: '#3B82F6',
         rarity: 'uncommon',
     },
     golden_hour: {
         type: 'golden_hour',
         icon: '🌇',
-        title: 'Golden Hour',
-        description: 'Captured the magic light',
+        title: 'ゴールデンアワー',
+        description: '夕暮れ時に撮影',
         color: '#F97316',
         rarity: 'common',
     },
     midnight_explorer: {
         type: 'midnight_explorer',
         icon: '🌙',
-        title: 'Midnight Explorer',
-        description: 'Active at the witching hour',
+        title: '真夜中の探検家',
+        description: '0時前後に撮影',
         color: '#1E3A8A',
         rarity: 'rare',
     },
     weekend_warrior: {
         type: 'weekend_warrior',
         icon: '🎉',
-        title: 'Weekend Warrior',
-        description: 'Made the most of days off',
+        title: '週末の戦士',
+        description: '週末だけの旅',
         color: '#A855F7',
         rarity: 'common',
     },
     long_weekend: {
         type: 'long_weekend',
         icon: '🏕️',
-        title: 'Long Weekend',
-        description: 'Extended the adventure',
+        title: '連休満喫',
+        description: '3日以上の旅',
         color: '#22C55E',
         rarity: 'uncommon',
     },
     week_traveler: {
         type: 'week_traveler',
         icon: '🗺️',
-        title: 'Week Traveler',
-        description: 'A full week of exploration',
+        title: '1週間の旅人',
+        description: '7日以上の旅',
         color: '#06B6D4',
         rarity: 'rare',
     },
     month_adventurer: {
         type: 'month_adventurer',
         icon: '🌍',
-        title: 'Month Adventurer',
-        description: 'A month-long odyssey',
+        title: '1ヶ月の冒険家',
+        description: '30日以上の大冒険',
         color: '#DC2626',
         rarity: 'legendary',
+    },
+    morning_person: {
+        type: 'morning_person',
+        icon: '☀️',
+        title: '朝型人間',
+        description: '午前中メイン',
+        color: '#FBBF24',
+        rarity: 'common',
+    },
+    afternoon_chill: {
+        type: 'afternoon_chill',
+        icon: '🌤️',
+        title: '午後のんびり',
+        description: '午後メインの撮影',
+        color: '#F97316',
+        rarity: 'common',
+    },
+    night_shooter: {
+        type: 'night_shooter',
+        icon: '🌃',
+        title: '夜の撮影者',
+        description: '夜メインの撮影',
+        color: '#6366F1',
+        rarity: 'common',
     },
 
     // Photo behavior
     machine_gun: {
         type: 'machine_gun',
         icon: '📸',
-        title: 'Machine Gun',
-        description: 'Rapid-fire photography',
+        title: '連写マスター',
+        description: '1分に10枚以上',
         color: '#EF4444',
         rarity: 'uncommon',
     },
     minimalist: {
         type: 'minimalist',
         icon: '🎯',
-        title: 'Minimalist',
-        description: 'Quality over quantity',
+        title: 'ミニマリスト',
+        description: '5-10枚だけ',
         color: '#64748B',
         rarity: 'uncommon',
     },
     photographer: {
         type: 'photographer',
         icon: '📷',
-        title: 'Photographer',
-        description: 'Captured 100+ moments',
+        title: 'フォトグラファー',
+        description: '100枚以上撮影',
         color: '#EC4899',
         rarity: 'rare',
     },
     paparazzi: {
         type: 'paparazzi',
         icon: '🎬',
-        title: 'Paparazzi',
-        description: 'Documented everything',
+        title: 'パパラッチ',
+        description: '500枚以上撮影',
         color: '#F43F5E',
         rarity: 'epic',
     },
     one_shot: {
         type: 'one_shot',
         icon: '🎲',
-        title: 'One Shot',
-        description: 'One photo, one memory',
+        title: 'ワンショット',
+        description: '1枚だけの記録',
         color: '#9333EA',
         rarity: 'legendary',
     },
     time_lapse_master: {
         type: 'time_lapse_master',
         icon: '⏱️',
-        title: 'Time Lapse Master',
-        description: 'Perfectly timed intervals',
+        title: 'タイムラプス',
+        description: '定期的な撮影',
         color: '#14B8A6',
         rarity: 'epic',
+    },
+    duo: {
+        type: 'duo',
+        icon: '✌️',
+        title: 'デュオ',
+        description: '2枚の思い出',
+        color: '#8B5CF6',
+        rarity: 'common',
+    },
+    trio: {
+        type: 'trio',
+        icon: '🔺',
+        title: 'トリオ',
+        description: '3枚の瞬間',
+        color: '#EC4899',
+        rarity: 'common',
+    },
+    handful: {
+        type: 'handful',
+        icon: '🖐️',
+        title: 'ひとつかみ',
+        description: '5枚ぴったり',
+        color: '#F59E0B',
+        rarity: 'common',
+    },
+    dozen: {
+        type: 'dozen',
+        icon: '🎁',
+        title: 'ダズン',
+        description: '12枚の記録',
+        color: '#10B981',
+        rarity: 'common',
+    },
+    twenty: {
+        type: 'twenty',
+        icon: '🎯',
+        title: 'トゥエンティ',
+        description: '20枚達成',
+        color: '#3B82F6',
+        rarity: 'common',
+    },
+    thirty: {
+        type: 'thirty',
+        icon: '📚',
+        title: 'サーティ',
+        description: '30枚の物語',
+        color: '#8B5CF6',
+        rarity: 'common',
+    },
+    fifty: {
+        type: 'fifty',
+        icon: '🏆',
+        title: 'フィフティ',
+        description: '50枚の冒険',
+        color: '#EAB308',
+        rarity: 'uncommon',
     },
 
     // Location & Geography
     mountain_hiker: {
         type: 'mountain_hiker',
         icon: '⛰️',
-        title: 'Mountain Hiker',
-        description: 'Conquered great heights',
+        title: '山登り',
+        description: '標高差500m以上',
         color: '#10B981',
         rarity: 'uncommon',
     },
     sea_level: {
         type: 'sea_level',
         icon: '🏖️',
-        title: 'Beach Lover',
-        description: 'Stayed close to the sea',
+        title: 'ビーチラバー',
+        description: '海沿いの旅',
         color: '#38BDF8',
         rarity: 'common',
     },
     altitude_master: {
         type: 'altitude_master',
         icon: '🏔️',
-        title: 'Altitude Master',
-        description: 'Reached the heavens',
+        title: '標高マスター',
+        description: '2000m以上',
         color: '#7C3AED',
         rarity: 'epic',
     },
     cafe_dweller: {
         type: 'cafe_dweller',
         icon: '☕',
-        title: 'Cafe Dweller',
-        description: 'Found the perfect spot',
+        title: 'カフェ好き',
+        description: '3時間以上滞在',
         color: '#6366F1',
         rarity: 'uncommon',
     },
     nomad: {
         type: 'nomad',
         icon: '🏃‍♂️',
-        title: 'Nomad',
-        description: 'Never stopped moving',
+        title: 'ノマド',
+        description: '止まらない旅',
         color: '#F59E0B',
         rarity: 'rare',
     },
     border_crosser: {
         type: 'border_crosser',
         icon: '🛂',
-        title: 'Border Crosser',
-        description: 'Ventured to new territories',
+        title: '越境者',
+        description: '遠くへジャンプ',
         color: '#059669',
         rarity: 'rare',
     },
     circle_back: {
         type: 'circle_back',
         icon: '🔄',
-        title: 'Circle Back',
-        description: 'Returned to where it began',
+        title: '帰ってきた',
+        description: '出発点に戻る',
         color: '#8B5CF6',
         rarity: 'common',
     },
     straight_line: {
         type: 'straight_line',
         icon: '📏',
-        title: 'Straight Line',
-        description: 'Traveled with purpose',
+        title: '一直線',
+        description: 'まっすぐ進んだ',
         color: '#475569',
         rarity: 'rare',
+    },
+    short_trip: {
+        type: 'short_trip',
+        icon: '🚶',
+        title: 'ショートトリップ',
+        description: '1km未満の散歩',
+        color: '#84CC16',
+        rarity: 'common',
+    },
+    medium_trip: {
+        type: 'medium_trip',
+        icon: '🚴',
+        title: 'ミドルトリップ',
+        description: '1-10kmの旅',
+        color: '#22C55E',
+        rarity: 'common',
+    },
+    long_trip: {
+        type: 'long_trip',
+        icon: '🚗',
+        title: 'ロングトリップ',
+        description: '10-50kmの旅',
+        color: '#0EA5E9',
+        rarity: 'common',
+    },
+    ultra_trip: {
+        type: 'ultra_trip',
+        icon: '🛫',
+        title: 'ウルトラトリップ',
+        description: '50km以上の大移動',
+        color: '#8B5CF6',
+        rarity: 'uncommon',
+    },
+
+    // Day of week
+    monday_blues: {
+        type: 'monday_blues',
+        icon: '😴',
+        title: '月曜日',
+        description: '週の始まりに撮影',
+        color: '#3B82F6',
+        rarity: 'common',
+    },
+    tuesday_vibes: {
+        type: 'tuesday_vibes',
+        icon: '✨',
+        title: '火曜日',
+        description: '火曜日の記録',
+        color: '#EF4444',
+        rarity: 'common',
+    },
+    hump_day: {
+        type: 'hump_day',
+        icon: '🐫',
+        title: '水曜日',
+        description: '週の真ん中',
+        color: '#14B8A6',
+        rarity: 'common',
+    },
+    thursday_mood: {
+        type: 'thursday_mood',
+        icon: '⚡',
+        title: '木曜日',
+        description: '木曜日の思い出',
+        color: '#F59E0B',
+        rarity: 'common',
+    },
+    friday_feeling: {
+        type: 'friday_feeling',
+        icon: '🎉',
+        title: '金曜日',
+        description: '週末前の撮影',
+        color: '#EC4899',
+        rarity: 'common',
+    },
+    saturday_fun: {
+        type: 'saturday_fun',
+        icon: '🌈',
+        title: '土曜日',
+        description: '休日を満喫',
+        color: '#8B5CF6',
+        rarity: 'common',
+    },
+    sunday_chill: {
+        type: 'sunday_chill',
+        icon: '☕',
+        title: '日曜日',
+        description: 'のんびり日曜',
+        color: '#F97316',
+        rarity: 'common',
     },
 
     // Special conditions
     weather_master: {
         type: 'weather_master',
         icon: '🌤️',
-        title: 'Weather Master',
-        description: 'Experienced all conditions',
+        title: '天気マスター',
+        description: '色々な天気',
         color: '#14B8A6',
         rarity: 'rare',
     },
     completionist: {
         type: 'completionist',
         icon: '🏆',
-        title: 'Completionist',
-        description: 'Achievement hunter',
+        title: 'コンプリート',
+        description: '10個以上の実績',
         color: '#EAB308',
         rarity: 'legendary',
     },
     first_timer: {
         type: 'first_timer',
         icon: '🎊',
-        title: 'First Timer',
-        description: 'Welcome to Auto Memories',
+        title: '初めての記録',
+        description: 'ようこそ！',
         color: '#EC4899',
         rarity: 'common',
     },
     anniversary: {
         type: 'anniversary',
         icon: '🎂',
-        title: 'Anniversary',
-        description: 'A special date returns',
+        title: '記念日',
+        description: '特別な日の記録',
         color: '#F43F5E',
         rarity: 'epic',
     },
     lucky_seven: {
         type: 'lucky_seven',
         icon: '🎰',
-        title: 'Lucky Seven',
-        description: 'The magic number',
+        title: 'ラッキー7',
+        description: '7枚の幸運',
         color: '#22C55E',
         rarity: 'uncommon',
     },
     round_number: {
         type: 'round_number',
         icon: '💯',
-        title: 'Round Number',
-        description: 'Perfectly balanced',
+        title: 'キリ番',
+        description: '10,50,100枚',
         color: '#3B82F6',
         rarity: 'uncommon',
     },
     symmetric: {
         type: 'symmetric',
         icon: '🪞',
-        title: 'Symmetric',
-        description: 'Mirror mirror...',
+        title: 'ゾロ目',
+        description: '11,22,33...',
         color: '#A855F7',
         rarity: 'rare',
     },
     fibonacci: {
         type: 'fibonacci',
         icon: '🐚',
-        title: 'Fibonacci',
-        description: 'Nature\'s sequence',
+        title: 'フィボナッチ',
+        description: '自然の数列',
         color: '#84CC16',
         rarity: 'epic',
     },
     prime_time: {
         type: 'prime_time',
         icon: '🔢',
-        title: 'Prime Time',
-        description: 'Mathematically special',
+        title: '素数',
+        description: '特別な数字',
         color: '#6366F1',
         rarity: 'rare',
     },
     perfect_timing: {
         type: 'perfect_timing',
         icon: '⏰',
-        title: 'Perfect Timing',
-        description: 'Captured at exactly :00',
+        title: 'ジャスト',
+        description: ':00秒に撮影',
         color: '#F97316',
         rarity: 'rare',
     },
     triple_digit: {
         type: 'triple_digit',
         icon: '🔥',
-        title: 'Triple Digit',
-        description: 'Burst mode activated',
+        title: '連続撮影',
+        description: '1分に3枚以上',
         color: '#DC2626',
+        rarity: 'uncommon',
+    },
+    quick_snap: {
+        type: 'quick_snap',
+        icon: '⚡',
+        title: 'クイックスナップ',
+        description: '10分以内の記録',
+        color: '#FBBF24',
+        rarity: 'common',
+    },
+    hour_journey: {
+        type: 'hour_journey',
+        icon: '⏱️',
+        title: '1時間の旅',
+        description: '1-2時間の記録',
+        color: '#22C55E',
+        rarity: 'common',
+    },
+    half_day: {
+        type: 'half_day',
+        icon: '🌤️',
+        title: '半日の冒険',
+        description: '3-6時間の記録',
+        color: '#0EA5E9',
+        rarity: 'common',
+    },
+    full_day: {
+        type: 'full_day',
+        icon: '🌞',
+        title: '1日の記録',
+        description: '6-12時間の思い出',
+        color: '#F59E0B',
+        rarity: 'common',
+    },
+    multi_day: {
+        type: 'multi_day',
+        icon: '📅',
+        title: '複数日の旅',
+        description: '24時間以上の大冒険',
+        color: '#8B5CF6',
         rarity: 'uncommon',
     },
 };

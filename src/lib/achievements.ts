@@ -46,7 +46,151 @@ function isPalindrome(n: number): boolean {
     return str === str.split('').reverse().join('') && str.length >= 2;
 }
 
-// ========== SPEED & MOVEMENT ==========
+// ========== NEW EASY ACHIEVEMENTS ==========
+
+// Photo count achievements
+function checkDuo(photos: Photo[]): Achievement | null {
+    if (photos.length === 2) return createAchievement('duo');
+    return null;
+}
+
+function checkTrio(photos: Photo[]): Achievement | null {
+    if (photos.length === 3) return createAchievement('trio');
+    return null;
+}
+
+function checkHandful(photos: Photo[]): Achievement | null {
+    if (photos.length === 5) return createAchievement('handful');
+    return null;
+}
+
+function checkDozen(photos: Photo[]): Achievement | null {
+    if (photos.length === 12) return createAchievement('dozen');
+    return null;
+}
+
+function checkTwenty(photos: Photo[]): Achievement | null {
+    if (photos.length === 20) return createAchievement('twenty');
+    return null;
+}
+
+function checkThirty(photos: Photo[]): Achievement | null {
+    if (photos.length === 30) return createAchievement('thirty');
+    return null;
+}
+
+function checkFifty(photos: Photo[]): Achievement | null {
+    if (photos.length === 50) return createAchievement('fifty');
+    return null;
+}
+
+// Time of day achievements
+function checkMorningPerson(photos: Photo[]): Achievement | null {
+    const morningPhotos = photos.filter(p => p.timestamp.getHours() < 12);
+    if (morningPhotos.length > photos.length / 2) return createAchievement('morning_person');
+    return null;
+}
+
+function checkAfternoonChill(photos: Photo[]): Achievement | null {
+    const afternoonPhotos = photos.filter(p => {
+        const h = p.timestamp.getHours();
+        return h >= 12 && h < 18;
+    });
+    if (afternoonPhotos.length > photos.length / 2) return createAchievement('afternoon_chill');
+    return null;
+}
+
+function checkNightShooter(photos: Photo[]): Achievement | null {
+    const nightPhotos = photos.filter(p => p.timestamp.getHours() >= 18);
+    if (nightPhotos.length > photos.length / 2) return createAchievement('night_shooter');
+    return null;
+}
+
+// Day of week achievements
+function checkDayOfWeek(photos: Photo[]): Achievement[] {
+    const achievements: Achievement[] = [];
+    const days = new Set(photos.map(p => p.timestamp.getDay()));
+
+    const dayMap: Record<number, AchievementType> = {
+        0: 'sunday_chill',
+        1: 'monday_blues',
+        2: 'tuesday_vibes',
+        3: 'hump_day',
+        4: 'thursday_mood',
+        5: 'friday_feeling',
+        6: 'saturday_fun',
+    };
+
+    days.forEach(day => {
+        achievements.push(createAchievement(dayMap[day]));
+    });
+
+    return achievements;
+}
+
+// Distance achievements
+function checkShortTrip(totalDistance: number): Achievement | null {
+    if (totalDistance < 1 && totalDistance > 0) return createAchievement('short_trip');
+    return null;
+}
+
+function checkMediumTrip(totalDistance: number): Achievement | null {
+    if (totalDistance >= 1 && totalDistance < 10) return createAchievement('medium_trip');
+    return null;
+}
+
+function checkLongTrip(totalDistance: number): Achievement | null {
+    if (totalDistance >= 10 && totalDistance < 50) return createAchievement('long_trip');
+    return null;
+}
+
+function checkUltraTrip(totalDistance: number): Achievement | null {
+    if (totalDistance >= 50) return createAchievement('ultra_trip');
+    return null;
+}
+
+// Duration achievements
+function checkQuickSnap(photos: Photo[]): Achievement | null {
+    if (photos.length < 2) return null;
+    const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const minutes = (sorted[sorted.length - 1].timestamp.getTime() - sorted[0].timestamp.getTime()) / (1000 * 60);
+    if (minutes > 0 && minutes < 10) return createAchievement('quick_snap');
+    return null;
+}
+
+function checkHourJourney(photos: Photo[]): Achievement | null {
+    if (photos.length < 2) return null;
+    const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const hours = (sorted[sorted.length - 1].timestamp.getTime() - sorted[0].timestamp.getTime()) / (1000 * 60 * 60);
+    if (hours >= 1 && hours < 2) return createAchievement('hour_journey');
+    return null;
+}
+
+function checkHalfDay(photos: Photo[]): Achievement | null {
+    if (photos.length < 2) return null;
+    const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const hours = (sorted[sorted.length - 1].timestamp.getTime() - sorted[0].timestamp.getTime()) / (1000 * 60 * 60);
+    if (hours >= 3 && hours < 6) return createAchievement('half_day');
+    return null;
+}
+
+function checkFullDay(photos: Photo[]): Achievement | null {
+    if (photos.length < 2) return null;
+    const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const hours = (sorted[sorted.length - 1].timestamp.getTime() - sorted[0].timestamp.getTime()) / (1000 * 60 * 60);
+    if (hours >= 6 && hours < 12) return createAchievement('full_day');
+    return null;
+}
+
+function checkMultiDay(photos: Photo[]): Achievement | null {
+    if (photos.length < 2) return null;
+    const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const hours = (sorted[sorted.length - 1].timestamp.getTime() - sorted[0].timestamp.getTime()) / (1000 * 60 * 60);
+    if (hours >= 24) return createAchievement('multi_day');
+    return null;
+}
+
+// ========== EXISTING ACHIEVEMENTS ==========
 
 function checkTeleporter(photos: Photo[]): Achievement | null {
     const gpsPhotos = photos.filter((p) => p.latitude != null && p.longitude != null);
@@ -95,8 +239,6 @@ function checkMarathonRunner(photos: Photo[], totalDistance: number): Achievemen
     }
     return null;
 }
-
-// ========== TIME-BASED ==========
 
 function checkEarlyBird(photos: Photo[]): Achievement | null {
     for (const photo of photos) {
@@ -175,8 +317,6 @@ function checkMonthAdventurer(photos: Photo[]): Achievement | null {
     return null;
 }
 
-// ========== PHOTO BEHAVIOR ==========
-
 function checkMachineGun(photos: Photo[]): Achievement | null {
     const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     for (let i = 0; i < sorted.length - 10; i++) {
@@ -240,8 +380,6 @@ function checkTimeLapseMaster(photos: Photo[]): Achievement | null {
     }
     return null;
 }
-
-// ========== LOCATION & GEOGRAPHY ==========
 
 function checkMountainHiker(photos: Photo[]): Achievement | null {
     const altPhotos = photos.filter((p) => p.altitude != null);
@@ -351,8 +489,6 @@ function checkStraightLine(photos: Photo[]): Achievement | null {
     return null;
 }
 
-// ========== SPECIAL CONDITIONS ==========
-
 function checkWeatherMaster(): Achievement | null {
     if (Math.random() > 0.7) return createAchievement('weather_master');
     return null;
@@ -438,6 +574,14 @@ export function calculateAchievements(photos: Photo[], isFirstTrip: boolean = fa
     const monthAdventurer = checkMonthAdventurer(photos);
     if (monthAdventurer) achievements.push(monthAdventurer);
 
+    // New time-based
+    const morningPerson = checkMorningPerson(photos);
+    if (morningPerson) achievements.push(morningPerson);
+    const afternoonChill = checkAfternoonChill(photos);
+    if (afternoonChill) achievements.push(afternoonChill);
+    const nightShooter = checkNightShooter(photos);
+    if (nightShooter) achievements.push(nightShooter);
+
     // Photo behavior
     const machineGun = checkMachineGun(photos);
     if (machineGun) achievements.push(machineGun);
@@ -453,6 +597,22 @@ export function calculateAchievements(photos: Photo[], isFirstTrip: boolean = fa
     if (oneShot) achievements.push(oneShot);
     const timeLapseMaster = checkTimeLapseMaster(photos);
     if (timeLapseMaster) achievements.push(timeLapseMaster);
+
+    // New photo count achievements
+    const duo = checkDuo(photos);
+    if (duo) achievements.push(duo);
+    const trio = checkTrio(photos);
+    if (trio) achievements.push(trio);
+    const handful = checkHandful(photos);
+    if (handful) achievements.push(handful);
+    const dozen = checkDozen(photos);
+    if (dozen) achievements.push(dozen);
+    const twenty = checkTwenty(photos);
+    if (twenty) achievements.push(twenty);
+    const thirty = checkThirty(photos);
+    if (thirty) achievements.push(thirty);
+    const fifty = checkFifty(photos);
+    if (fifty) achievements.push(fifty);
 
     // Location & Geography
     const mountainHiker = checkMountainHiker(photos);
@@ -471,6 +631,32 @@ export function calculateAchievements(photos: Photo[], isFirstTrip: boolean = fa
     if (circleBack) achievements.push(circleBack);
     const straightLine = checkStraightLine(photos);
     if (straightLine) achievements.push(straightLine);
+
+    // New distance achievements
+    const shortTrip = checkShortTrip(totalDistance);
+    if (shortTrip) achievements.push(shortTrip);
+    const mediumTrip = checkMediumTrip(totalDistance);
+    if (mediumTrip) achievements.push(mediumTrip);
+    const longTrip = checkLongTrip(totalDistance);
+    if (longTrip) achievements.push(longTrip);
+    const ultraTrip = checkUltraTrip(totalDistance);
+    if (ultraTrip) achievements.push(ultraTrip);
+
+    // New duration achievements
+    const quickSnap = checkQuickSnap(photos);
+    if (quickSnap) achievements.push(quickSnap);
+    const hourJourney = checkHourJourney(photos);
+    if (hourJourney) achievements.push(hourJourney);
+    const halfDay = checkHalfDay(photos);
+    if (halfDay) achievements.push(halfDay);
+    const fullDay = checkFullDay(photos);
+    if (fullDay) achievements.push(fullDay);
+    const multiDay = checkMultiDay(photos);
+    if (multiDay) achievements.push(multiDay);
+
+    // Day of week achievements
+    const dayOfWeekAchievements = checkDayOfWeek(photos);
+    achievements.push(...dayOfWeekAchievements);
 
     // Special conditions
     const weatherMaster = checkWeatherMaster();
