@@ -16,7 +16,7 @@ interface EndRollProps {
     onExit?: () => void;
 }
 
-type Phase = 'grid' | 'journey' | 'montage' | 'credits';
+type Phase = 'grid' | 'journey' | 'montage' | 'credits' | 'afterglow';
 
 export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollProps) {
     const route = trip.route;
@@ -27,6 +27,8 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
     const [montageIndex, setMontageIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(true);
     const [gridZoomTarget, setGridZoomTarget] = useState<number | null>(null);
+    const [creditsFinished, setCreditsFinished] = useState(false);
+    const [afterglowPhotoIndex, setAfterglowPhotoIndex] = useState(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const sortedPhotos = useMemo(() =>
@@ -90,7 +92,16 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 }
                 break;
             case 'credits':
-                timeout = setTimeout(() => onComplete?.(), 15000);
+                timeout = setTimeout(() => {
+                    setCreditsFinished(true);
+                    setPhase('afterglow');
+                }, 22000);
+                break;
+            case 'afterglow':
+                // Slowly cycle through photos in background
+                timeout = setTimeout(() => {
+                    setAfterglowPhotoIndex(i => (i + 1) % sortedPhotos.length);
+                }, 3000);
                 break;
         }
 
@@ -431,14 +442,14 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                     >
                         {/* Scrolling credits container */}
                         <motion.div
-                            initial={{ y: '30%' }}
-                            animate={{ y: '-150%' }}
-                            transition={{ duration: 20, ease: 'linear' }}
+                            initial={{ y: '60%' }}
+                            animate={{ y: '-180%' }}
+                            transition={{ duration: 22, ease: 'linear' }}
                             style={{
                                 position: 'absolute',
                                 left: 0,
                                 right: 0,
-                                top: '30%',
+                                top: '60%',
                                 textAlign: 'center',
                                 padding: '0 32px',
                             }}
@@ -575,26 +586,136 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             pointerEvents: 'none',
                         }} />
 
+                        {/* Exit button - only show after credits finished */}
+                        {creditsFinished && (
+                            <motion.button
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.5 }}
+                                onClick={handleExit}
+                                style={{
+                                    position: 'absolute',
+                                    bottom: '40px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    padding: '16px 48px',
+                                    backgroundColor: 'rgba(0,0,0,0.5)',
+                                    border: '1px solid rgba(255,255,255,0.4)',
+                                    borderRadius: '30px',
+                                    color: 'white',
+                                    fontSize: '18px',
+                                    cursor: 'pointer',
+                                    zIndex: 20,
+                                }}
+                            >
+                                おわり
+                            </motion.button>
+                        )}
+                    </motion.div>
+                )}
+
+                {/* Afterglow Phase - Photos in background */}
+                {phase === 'afterglow' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'black',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {/* Background photo slideshow */}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={afterglowPhotoIndex}
+                                initial={{ opacity: 0, scale: 1.05 }}
+                                animate={{ opacity: 0.4, scale: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 2 }}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundImage: `url(${photoUrls[afterglowPhotoIndex]})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                }}
+                            />
+                        </AnimatePresence>
+
+                        {/* Gradient overlay */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'radial-gradient(ellipse at center, transparent 0%, black 80%)',
+                        }} />
+
+                        {/* Trip name in center */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            style={{
+                                position: 'absolute',
+                                top: '40%',
+                                left: 0,
+                                right: 0,
+                                textAlign: 'center',
+                            }}
+                        >
+                            <p style={{
+                                fontSize: '14px',
+                                color: 'rgba(255,255,255,0.5)',
+                                letterSpacing: '4px',
+                                marginBottom: '16px',
+                            }}>
+                                Thank you for watching
+                            </p>
+                            <h1 style={{
+                                fontSize: '28px',
+                                fontWeight: '300',
+                                color: 'white',
+                                letterSpacing: '2px',
+                            }}>
+                                {trip.name}
+                            </h1>
+                        </motion.div>
+
                         {/* Exit button */}
-                        <button
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1 }}
                             onClick={handleExit}
                             style={{
                                 position: 'absolute',
-                                bottom: '40px',
+                                bottom: '60px',
                                 left: '50%',
                                 transform: 'translateX(-50%)',
-                                padding: '16px 48px',
-                                backgroundColor: 'transparent',
+                                padding: '18px 60px',
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                backdropFilter: 'blur(10px)',
                                 border: '1px solid rgba(255,255,255,0.3)',
                                 borderRadius: '30px',
                                 color: 'white',
-                                fontSize: '16px',
+                                fontSize: '18px',
+                                fontWeight: '500',
                                 cursor: 'pointer',
-                                zIndex: 10,
+                                zIndex: 20,
                             }}
                         >
                             おわり
-                        </button>
+                        </motion.button>
                     </motion.div>
                 )}
             </AnimatePresence>
