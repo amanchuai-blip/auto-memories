@@ -44,11 +44,22 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
         [sortedPhotos]
     );
 
-    // Audio
+    // Audio - random BGM from 7 tracks
     useEffect(() => {
+        const bgmTracks = [
+            '/audio/bgm.mp3',
+            '/audio/bgm1.mp3',
+            '/audio/bgm2.mp3',
+            '/audio/bgm3.mp3',
+            '/audio/bgm4.mp3',
+            '/audio/bgm5.mp3',
+            '/audio/bgm6.mp3',
+        ];
+        const randomTrack = bgmTracks[Math.floor(Math.random() * bgmTracks.length)];
+
         const init = () => {
             if (audioRef.current) return;
-            const audio = new Audio('/audio/bgm.mp3');
+            const audio = new Audio(randomTrack);
             audio.loop = true;
             audio.volume = 0.5;
             audioRef.current = audio;
@@ -115,7 +126,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
 
     // Format duration
     const formatDuration = () => {
-        const duration = trip.duration;
+        const duration = Math.round(trip.duration / 60); // seconds -> minutes
         if (duration < 60) return `${duration}分`;
         const hours = Math.floor(duration / 60);
         const mins = duration % 60;
@@ -144,7 +155,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 top: 0,
                 left: 0,
                 right: 0,
-                zIndex: 100,
+                zIndex: 10001,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -488,7 +499,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                     撮影枚数　{trip.totalPhotos}枚
                                 </p>
                                 <p style={{ fontSize: '20px', color: 'white', marginBottom: '12px' }}>
-                                    移動距離　{trip.totalDistance}キロメートル
+                                    移動距離　{trip.totalDistance > 0 ? `${trip.totalDistance}キロメートル` : '計測不可（GPS情報なし）'}
                                 </p>
                                 <p style={{ fontSize: '20px', color: 'white' }}>
                                     旅の時間　{formatDuration()}
@@ -627,6 +638,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             bottom: 0,
                             backgroundColor: 'black',
                             overflow: 'hidden',
+                            zIndex: 50,
                         }}
                     >
                         {/* Background photo slideshow */}

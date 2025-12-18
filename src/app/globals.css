@@ -179,3 +179,26 @@ input:focus-visible {
     padding-right: max(0px, env(safe-area-inset-right));
   }
 }
+
+/* Portrait only - show message in landscape */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  body::before {
+    content: '縦画面でご利用ください 📱';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0a0a0a;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 99999;
+  }
+
+  body>* {
+    display: none !important;
+  }
+}
