@@ -100,11 +100,11 @@ input:focus-visible {
 /* Credits scroll animation - pausable */
 @keyframes credits-scroll {
   from {
-    transform: translateY(0);
+    transform: translateY(50%);
   }
 
   to {
-    transform: translateY(-240%);
+    transform: translateY(-200%);
   }
 }
 

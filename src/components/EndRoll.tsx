@@ -116,7 +116,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 timeout = setTimeout(() => {
                     setCreditsFinished(true);
                     setPhase('afterglow');
-                }, 22000);
+                }, 15000);
                 break;
             case 'afterglow':
                 // Slowly cycle through photos in background
@@ -127,7 +127,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
         }
 
         return () => clearTimeout(timeout);
-    }, [phase, isPlaying, currentIndex, montageIndex, sortedPhotos.length, onComplete]);
+    }, [phase, isPlaying, currentIndex, montageIndex, afterglowPhotoIndex, sortedPhotos.length, onComplete]);
 
     const handleExit = useCallback(() => {
         if (audioRef.current) audioRef.current.pause();
@@ -470,7 +470,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 top: '60%',
                                 textAlign: 'center',
                                 padding: '0 32px',
-                                animation: 'credits-scroll 22s linear forwards',
+                                animation: 'credits-scroll 15s linear forwards',
                                 animationPlayState: isPlaying ? 'running' : 'paused',
                             }}
                         >
