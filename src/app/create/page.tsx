@@ -113,33 +113,65 @@ export default function CreatePage() {
     };
 
     return (
-        <main className="min-h-[100dvh] bg-black text-white flex flex-col">
+        <main style={{
+            minHeight: '100dvh',
+            backgroundColor: 'black',
+            color: 'white',
+            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+            display: 'flex',
+            flexDirection: 'column',
+        }}>
             {/* Header */}
-            <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-lg border-b border-white/5">
-                <div className="px-5 py-4 flex items-center gap-4">
-                    <button
-                        onClick={() => router.push('/')}
-                        className="p-3 -ml-3 rounded-full active:bg-white/10"
-                    >
-                        <ArrowLeft className="w-6 h-6" />
-                    </button>
-                    <div>
-                        <h1 className="text-xl font-bold">新しい記録</h1>
-                    </div>
-                </div>
+            <header style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 40,
+                backgroundColor: 'rgba(0,0,0,0.9)',
+                backdropFilter: 'blur(10px)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                padding: '16px 20px',
+                paddingTop: 'max(16px, env(safe-area-inset-top))',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+            }}>
+                <button
+                    onClick={() => router.push('/')}
+                    style={{
+                        padding: '12px',
+                        marginLeft: '-12px',
+                        borderRadius: '50%',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                    }}
+                >
+                    <ArrowLeft size={28} color="white" />
+                </button>
+                <h1 style={{ fontSize: '22px', fontWeight: 'bold' }}>新しい記録</h1>
             </header>
 
             {/* Content */}
-            <div className="flex-1 p-5 space-y-5 pb-36">
+            <div style={{ flex: 1, padding: '20px', paddingBottom: '140px' }}>
                 {/* Title */}
-                <div>
-                    <label className="text-base text-white/60 mb-2 block font-medium">タイトル</label>
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'block', fontWeight: '500' }}>タイトル</label>
                     <input
                         type="text"
                         value={tripName}
                         onChange={(e) => setTripName(e.target.value)}
                         placeholder="例: 夏の京都旅行"
-                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-lg placeholder-white/30 focus:border-violet-500 focus:outline-none"
+                        style={{
+                            width: '100%',
+                            padding: '18px 20px',
+                            backgroundColor: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '16px',
+                            color: 'white',
+                            fontSize: '20px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                        }}
                     />
                 </div>
 
@@ -150,7 +182,7 @@ export default function CreatePage() {
                     processingProgress={processingProgress}
                 />
 
-                <p className="text-base text-white/40 text-center">
+                <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '16px' }}>
                     ※ 大量の写真は処理に時間がかかります
                 </p>
 
@@ -161,10 +193,19 @@ export default function CreatePage() {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
-                            className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3"
+                            style={{
+                                padding: '16px',
+                                borderRadius: '16px',
+                                backgroundColor: 'rgba(239,68,68,0.1)',
+                                border: '1px solid rgba(239,68,68,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                marginTop: '20px',
+                            }}
                         >
-                            <AlertCircle className="w-6 h-6 text-red-400" />
-                            <p className="text-red-300 text-base">{error}</p>
+                            <AlertCircle size={24} color="#f87171" />
+                            <p style={{ color: '#fca5a5', fontSize: '18px' }}>{error}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -175,15 +216,29 @@ export default function CreatePage() {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-5 rounded-2xl bg-green-500/10 border border-green-500/20"
+                            style={{
+                                padding: '20px',
+                                borderRadius: '16px',
+                                backgroundColor: 'rgba(34,197,94,0.1)',
+                                border: '1px solid rgba(34,197,94,0.2)',
+                                marginTop: '20px',
+                            }}
                         >
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <Check className="w-7 h-7 text-green-400" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                <div style={{
+                                    width: '56px',
+                                    height: '56px',
+                                    borderRadius: '50%',
+                                    backgroundColor: 'rgba(34,197,94,0.2)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}>
+                                    <Check size={28} color="#4ade80" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-green-300 text-xl">{processedPhotos.length}枚準備完了</p>
-                                    <p className="text-base text-white/50 mt-1">
+                                    <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#86efac' }}>{processedPhotos.length}枚準備完了</p>
+                                    <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
                                         GPS: {processedPhotos.filter(p => p.latitude).length}枚
                                     </p>
                                 </div>
@@ -200,16 +255,39 @@ export default function CreatePage() {
                         initial={{ y: 100 }}
                         animate={{ y: 0 }}
                         exit={{ y: 100 }}
-                        className="fixed bottom-0 left-0 right-0 p-5 pb-10 bg-gradient-to-t from-black via-black to-transparent"
+                        style={{
+                            position: 'fixed',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: '20px',
+                            paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
+                            background: 'linear-gradient(to top, black 60%, transparent)',
+                        }}
                     >
                         <button
                             onClick={handleCreateTrip}
                             disabled={isProcessing || !tripName.trim()}
-                            className="w-full py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 transition-all"
+                            style={{
+                                width: '100%',
+                                padding: '20px',
+                                background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
+                                border: 'none',
+                                borderRadius: '16px',
+                                color: 'white',
+                                fontSize: '22px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '12px',
+                                opacity: isProcessing || !tripName.trim() ? 0.5 : 1,
+                            }}
                         >
                             {isProcessing ? (
                                 <>
-                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                    <Loader2 size={24} className="animate-spin" />
                                     作成中...
                                 </>
                             ) : (

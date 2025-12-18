@@ -248,12 +248,12 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         }}
                     >
                         {/* Map */}
-                        <div style={{ height: '25%', minHeight: '120px', position: 'relative' }}>
+                        <div style={{ height: '25%', minHeight: '140px', position: 'relative' }}>
                             <MapView
                                 route={route}
                                 isAnimating={isPlaying}
                                 currentPointIndex={Math.min(currentIndex, route.length - 1)}
-                                className="w-full h-full"
+                                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
                             />
                             <div style={{
                                 position: 'absolute',

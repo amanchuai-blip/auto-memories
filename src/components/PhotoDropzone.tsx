@@ -49,30 +49,47 @@ export default function PhotoDropzone({
                 const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
                 if (files.length > 0) onFilesSelected(files);
             }}
-            className={`
-        w-full rounded-2xl p-10 text-center transition-all border-2 border-dashed
-        ${isDragging ? 'border-violet-500 bg-violet-500/10' : 'border-white/20 bg-white/5'}
-        ${isProcessing ? 'cursor-wait' : 'cursor-pointer active:bg-white/10'}
-      `}
+            style={{
+                width: '100%',
+                borderRadius: '20px',
+                padding: '48px 24px',
+                textAlign: 'center',
+                border: `2px dashed ${isDragging ? '#8b5cf6' : 'rgba(255,255,255,0.2)'}`,
+                backgroundColor: isDragging ? 'rgba(139,92,246,0.1)' : 'rgba(255,255,255,0.05)',
+                cursor: isProcessing ? 'wait' : 'pointer',
+                transition: 'all 0.2s',
+            }}
         >
             {isProcessing ? (
-                <div className="space-y-5">
+                <div>
                     <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                        style={{ display: 'inline-block' }}
                     >
-                        <Loader2 className="w-14 h-14 mx-auto text-violet-400" />
+                        <Loader2 size={56} color="#a78bfa" />
                     </motion.div>
-                    <div>
-                        <p className="font-bold text-xl">処理中...</p>
+                    <div style={{ marginTop: '20px' }}>
+                        <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'white' }}>処理中...</p>
                         {processingProgress && (
                             <>
-                                <p className="text-lg text-white/60 mt-2">
+                                <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>
                                     {processingProgress.current} / {processingProgress.total}
                                 </p>
-                                <div className="w-full h-2 bg-white/10 rounded-full mt-4 overflow-hidden">
+                                <div style={{
+                                    width: '100%',
+                                    height: '8px',
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                    borderRadius: '4px',
+                                    marginTop: '16px',
+                                    overflow: 'hidden',
+                                }}>
                                     <motion.div
-                                        className="h-full bg-violet-500"
+                                        style={{
+                                            height: '100%',
+                                            backgroundColor: '#8b5cf6',
+                                            borderRadius: '4px',
+                                        }}
                                         initial={{ width: 0 }}
                                         animate={{ width: `${(processingProgress.current / processingProgress.total) * 100}%` }}
                                     />
@@ -82,14 +99,25 @@ export default function PhotoDropzone({
                     </div>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
-                        <Camera className="w-10 h-10 text-white/70" />
+                <div>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        margin: '0 auto 20px',
+                        borderRadius: '20px',
+                        background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <Camera size={40} color="rgba(255,255,255,0.7)" />
                     </div>
-                    <div>
-                        <p className="font-bold text-xl">{isDragging ? 'ここにドロップ' : '写真を選択'}</p>
-                        <p className="text-lg text-white/50 mt-2">タップして選択</p>
-                    </div>
+                    <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'white' }}>
+                        {isDragging ? 'ここにドロップ' : '写真を選択'}
+                    </p>
+                    <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
+                        タップして選択
+                    </p>
                 </div>
             )}
         </button>
