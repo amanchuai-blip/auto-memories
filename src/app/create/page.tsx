@@ -115,19 +115,31 @@ export default function CreatePage() {
     return (
         <main style={{
             minHeight: '100dvh',
-            backgroundColor: 'black',
+            background: 'linear-gradient(180deg, #0a0a0a 0%, #1a1025 50%, #0f0a1a 100%)',
             color: 'white',
             fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
             display: 'flex',
             flexDirection: 'column',
+            position: 'relative',
         }}>
+            {/* Background decoration */}
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.15) 0%, transparent 50%)',
+                pointerEvents: 'none',
+            }} />
+
             {/* Header */}
             <header style={{
                 position: 'sticky',
                 top: 0,
                 zIndex: 40,
-                backgroundColor: 'rgba(0,0,0,0.9)',
-                backdropFilter: 'blur(10px)',
+                backgroundColor: 'rgba(10,10,10,0.8)',
+                backdropFilter: 'blur(20px)',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
                 padding: '16px 20px',
                 paddingTop: 'max(16px, env(safe-area-inset-top))',
@@ -152,7 +164,7 @@ export default function CreatePage() {
             </header>
 
             {/* Content */}
-            <div style={{ flex: 1, padding: '20px', paddingBottom: '140px' }}>
+            <div style={{ flex: 1, padding: '20px', paddingBottom: '140px', position: 'relative', zIndex: 1 }}>
                 {/* Title */}
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'block', fontWeight: '500' }}>タイトル</label>
@@ -262,7 +274,7 @@ export default function CreatePage() {
                             right: 0,
                             padding: '20px',
                             paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
-                            background: 'linear-gradient(to top, black 60%, transparent)',
+                            background: 'linear-gradient(to top, rgba(10,10,10,0.95) 60%, transparent)',
                         }}
                     >
                         <button
@@ -283,6 +295,7 @@ export default function CreatePage() {
                                 justifyContent: 'center',
                                 gap: '12px',
                                 opacity: isProcessing || !tripName.trim() ? 0.5 : 1,
+                                boxShadow: '0 8px 32px rgba(139,92,246,0.3)',
                             }}
                         >
                             {isProcessing ? (

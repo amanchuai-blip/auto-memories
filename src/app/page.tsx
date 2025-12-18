@@ -25,17 +25,38 @@ export default function HomePage() {
   return (
     <main style={{
       minHeight: '100dvh',
-      backgroundColor: 'black',
+      background: 'linear-gradient(180deg, #0a0a0a 0%, #1a1025 50%, #0f0a1a 100%)',
       color: 'white',
       fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+      position: 'relative',
     }}>
+      {/* Background decoration */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.15) 0%, transparent 50%)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        right: '-20%',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(236,72,153,0.1) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
       {/* Header */}
       <header style={{
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        backdropFilter: 'blur(10px)',
+        backgroundColor: 'rgba(10,10,10,0.8)',
+        backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255,255,255,0.05)',
         padding: '20px',
         paddingTop: 'max(20px, env(safe-area-inset-top))',
@@ -44,16 +65,17 @@ export default function HomePage() {
         <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>写真から映画を作る</p>
       </header>
 
-      <div style={{ padding: '20px', paddingBottom: '100px' }}>
+      <div style={{ padding: '20px', paddingBottom: '100px', position: 'relative', zIndex: 1 }}>
         {/* Create Button */}
         <Link href="/create" style={{ textDecoration: 'none' }}>
           <motion.div
             whileTap={{ scale: 0.98 }}
             style={{
               background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-              borderRadius: '20px',
+              borderRadius: '24px',
               padding: '24px',
               marginBottom: '32px',
+              boxShadow: '0 8px 32px rgba(139,92,246,0.3)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -90,8 +112,9 @@ export default function HomePage() {
             <div style={{
               textAlign: 'center',
               padding: '60px 20px',
-              borderRadius: '20px',
+              borderRadius: '24px',
               border: '2px dashed rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.02)',
             }}>
               <p style={{ fontSize: '48px', marginBottom: '16px' }}>📷</p>
               <p style={{ fontSize: '20px', color: 'rgba(255,255,255,0.5)' }}>まだ記録がありません</p>
@@ -113,17 +136,19 @@ export default function HomePage() {
                         position: 'relative',
                         borderRadius: '20px',
                         backgroundColor: 'rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(10px)',
                         padding: '20px',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '20px',
+                        border: '1px solid rgba(255,255,255,0.05)',
                       }}>
                         {/* Icon */}
                         <div style={{
                           width: '64px',
                           height: '64px',
                           borderRadius: '16px',
-                          background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))',
+                          background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(236,72,153,0.3))',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',

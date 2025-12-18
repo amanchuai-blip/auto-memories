@@ -90,7 +90,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 }
                 break;
             case 'credits':
-                timeout = setTimeout(() => onComplete?.(), 8000);
+                timeout = setTimeout(() => onComplete?.(), 15000);
                 break;
         }
 
@@ -101,6 +101,15 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
         if (audioRef.current) audioRef.current.pause();
         onExit?.();
     }, [onExit]);
+
+    // Format duration
+    const formatDuration = () => {
+        const duration = trip.duration;
+        if (duration < 60) return `${duration}分`;
+        const hours = Math.floor(duration / 60);
+        const mins = duration % 60;
+        return mins > 0 ? `${hours}時間${mins}分` : `${hours}時間`;
+    };
 
     return (
         <div
@@ -275,7 +284,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             </div>
                         </div>
 
-                        {/* Photo Container - FIXED */}
+                        {/* Photo Container */}
                         <div style={{
                             flex: 1,
                             display: 'flex',
@@ -404,7 +413,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 )}
             </AnimatePresence>
 
-            {/* CREDITS Phase */}
+            {/* CREDITS Phase - Hollywood Style Scrolling */}
             <AnimatePresence>
                 {phase === 'credits' && (
                     <motion.div
@@ -416,91 +425,176 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
                             backgroundColor: 'black',
-                            padding: '24px',
+                            overflow: 'hidden',
                         }}
                     >
-                        <div style={{ textAlign: 'center', maxWidth: '320px', width: '100%' }}>
-                            <motion.h2
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '24px' }}
-                            >
-                                {trip.name}
-                            </motion.h2>
+                        {/* Scrolling credits container */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: '-100%' }}
+                            transition={{ duration: 12, ease: 'linear' }}
+                            style={{
+                                position: 'absolute',
+                                left: 0,
+                                right: 0,
+                                top: '100%',
+                                textAlign: 'center',
+                                padding: '0 32px',
+                            }}
+                        >
+                            {/* Title */}
+                            <div style={{ marginBottom: '80px' }}>
+                                <p style={{
+                                    fontSize: '14px',
+                                    color: 'rgba(255,255,255,0.5)',
+                                    letterSpacing: '4px',
+                                    marginBottom: '16px',
+                                }}>
+                                    A JOURNEY FILM
+                                </p>
+                                <h1 style={{
+                                    fontSize: '36px',
+                                    fontWeight: '300',
+                                    color: 'white',
+                                    letterSpacing: '2px',
+                                }}>
+                                    {trip.name}
+                                </h1>
+                            </div>
 
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.3 }}
-                                style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}
-                            >
-                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px' }}>
-                                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>{trip.totalPhotos}</p>
-                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>写真</p>
-                                </div>
-                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px' }}>
-                                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>{trip.totalDistance}</p>
-                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>km</p>
-                                </div>
-                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px' }}>
-                                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#fbbf24' }}>{achievements.length}</p>
-                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>実績</p>
-                                </div>
-                            </motion.div>
+                            {/* Stats section */}
+                            <div style={{ marginBottom: '60px' }}>
+                                <p style={{
+                                    fontSize: '12px',
+                                    color: 'rgba(255,255,255,0.4)',
+                                    letterSpacing: '3px',
+                                    marginBottom: '24px',
+                                }}>
+                                    記録
+                                </p>
+                                <p style={{ fontSize: '20px', color: 'white', marginBottom: '12px' }}>
+                                    撮影枚数　{trip.totalPhotos}枚
+                                </p>
+                                <p style={{ fontSize: '20px', color: 'white', marginBottom: '12px' }}>
+                                    移動距離　{trip.totalDistance}キロメートル
+                                </p>
+                                <p style={{ fontSize: '20px', color: 'white' }}>
+                                    旅の時間　{formatDuration()}
+                                </p>
+                            </div>
 
+                            {/* Achievements section - Japanese text only, no emoji */}
                             {achievements.length > 0 && (
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ delay: 0.6 }}
-                                    style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}
-                                >
-                                    {achievements.slice(0, 5).map((a, i) => (
-                                        <motion.div
+                                <div style={{ marginBottom: '60px' }}>
+                                    <p style={{
+                                        fontSize: '12px',
+                                        color: 'rgba(255,255,255,0.4)',
+                                        letterSpacing: '3px',
+                                        marginBottom: '24px',
+                                    }}>
+                                        獲得した称号
+                                    </p>
+                                    {achievements.map((a) => (
+                                        <p
                                             key={a.id}
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ delay: 0.8 + i * 0.1 }}
                                             style={{
-                                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                                padding: '6px 12px',
-                                                borderRadius: '20px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
+                                                fontSize: '18px',
+                                                color: 'white',
+                                                marginBottom: '12px',
                                             }}
                                         >
-                                            <span style={{ fontSize: '16px' }}>{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
-                                            <span style={{ fontSize: '12px', color: 'white' }}>{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
-                                        </motion.div>
+                                            {ACHIEVEMENT_DEFINITIONS[a.type].title}
+                                        </p>
                                     ))}
-                                </motion.div>
+                                </div>
                             )}
 
-                            <motion.button
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 1.2 }}
-                                onClick={handleExit}
-                                style={{
-                                    width: '100%',
-                                    padding: '16px',
-                                    background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    fontSize: '18px',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                おわり
-                            </motion.button>
-                        </div>
+                            {/* Date */}
+                            <div style={{ marginBottom: '60px' }}>
+                                <p style={{
+                                    fontSize: '12px',
+                                    color: 'rgba(255,255,255,0.4)',
+                                    letterSpacing: '3px',
+                                    marginBottom: '24px',
+                                }}>
+                                    撮影期間
+                                </p>
+                                <p style={{ fontSize: '18px', color: 'white' }}>
+                                    {trip.startDate ? trip.startDate.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+                                    {trip.startDate && trip.endDate && trip.startDate.toDateString() !== trip.endDate.toDateString() && (
+                                        <> ー {trip.endDate.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</>
+                                    )}
+                                </p>
+                            </div>
+
+                            {/* Credits */}
+                            <div style={{ marginBottom: '80px' }}>
+                                <p style={{
+                                    fontSize: '12px',
+                                    color: 'rgba(255,255,255,0.4)',
+                                    letterSpacing: '3px',
+                                    marginBottom: '24px',
+                                }}>
+                                    CREATED WITH
+                                </p>
+                                <p style={{ fontSize: '24px', color: 'white', fontWeight: '300' }}>
+                                    Auto Memories
+                                </p>
+                            </div>
+
+                            {/* Thank you */}
+                            <div>
+                                <p style={{
+                                    fontSize: '16px',
+                                    color: 'rgba(255,255,255,0.6)',
+                                    fontStyle: 'italic',
+                                }}>
+                                    この旅の思い出を写真に残してくれてありがとう
+                                </p>
+                            </div>
+                        </motion.div>
+
+                        {/* Fade gradients */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '150px',
+                            background: 'linear-gradient(to bottom, black 0%, transparent 100%)',
+                            pointerEvents: 'none',
+                        }} />
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '150px',
+                            background: 'linear-gradient(to top, black 0%, transparent 100%)',
+                            pointerEvents: 'none',
+                        }} />
+
+                        {/* Exit button */}
+                        <button
+                            onClick={handleExit}
+                            style={{
+                                position: 'absolute',
+                                bottom: '40px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                padding: '16px 48px',
+                                backgroundColor: 'transparent',
+                                border: '1px solid rgba(255,255,255,0.3)',
+                                borderRadius: '30px',
+                                color: 'white',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                zIndex: 10,
+                            }}
+                        >
+                            おわり
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
