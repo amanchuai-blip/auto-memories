@@ -31,18 +31,28 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
     const [afterglowPhotoIndex, setAfterglowPhotoIndex] = useState(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const sortedPhotos = useMemo(() =>
-        [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-        [photos]
-    );
+    const sortedPhotos = useMemo(() => {
+        try {
+            return [...photos].sort((a, b) => {
+                const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+                const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+                return aTime - bTime;
+            });
+        } catch {
+            return photos;
+        }
+    }, [photos]);
 
     const currentPhoto = sortedPhotos[currentIndex];
     const cumulativeDistance = calculateCumulativeDistance(sortedPhotos, currentIndex);
 
-    const photoUrls = useMemo(() =>
-        sortedPhotos.map(p => URL.createObjectURL(p.blob)),
-        [sortedPhotos]
-    );
+    const photoUrls = useMemo(() => {
+        try {
+            return sortedPhotos.map(p => URL.createObjectURL(p.blob));
+        } catch {
+            return [];
+        }
+    }, [sortedPhotos]);
 
     // Audio - random BGM from 7 tracks
     useEffect(() => {
