@@ -266,6 +266,9 @@ export default function CreatePage() {
                 <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '12px' }}>
                     ※ 追加を押してから表示まで時間がかかる場合があります
                 </p>
+                <p style={{ fontSize: '13px', color: 'rgba(251,191,36,0.8)', textAlign: 'center', marginTop: '8px' }}>
+                    ⚠️ 写真が多すぎると再生時にエラーが発生する場合があります（推奨: 50枚以下）
+                </p>
 
                 {/* Error */}
                 <AnimatePresence>
