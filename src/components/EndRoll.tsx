@@ -72,14 +72,14 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
             case 'grid':
                 timeout = setTimeout(() => {
                     setGridZoomTarget(0);
-                    setTimeout(() => setPhase('journey'), 1500);
-                }, 3000);
+                    setTimeout(() => setPhase('journey'), 800);
+                }, 1000);
                 break;
             case 'journey':
                 if (currentIndex < sortedPhotos.length - 1) {
-                    timeout = setTimeout(() => setCurrentIndex(i => i + 1), 3500);
+                    timeout = setTimeout(() => setCurrentIndex(i => i + 1), 2000);
                 } else {
-                    timeout = setTimeout(() => setPhase('montage'), 1500);
+                    timeout = setTimeout(() => setPhase('montage'), 1000);
                 }
                 break;
             case 'montage':

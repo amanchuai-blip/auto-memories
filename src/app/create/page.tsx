@@ -264,7 +264,7 @@ export default function CreatePage() {
                 </button>
 
                 <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '12px' }}>
-                    ※ 写真の処理には時間がかかることがあります
+                    ※ 追加を押してから表示まで時間がかかる場合があります
                 </p>
 
                 {/* Error */}
