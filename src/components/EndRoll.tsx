@@ -76,6 +76,16 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
         };
     }, []);
 
+    // Pause/resume music when isPlaying changes
+    useEffect(() => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.play().catch(() => { });
+        } else {
+            audioRef.current.pause();
+        }
+    }, [isPlaying]);
+
     // Phase progression
     useEffect(() => {
         if (!isPlaying) return;
