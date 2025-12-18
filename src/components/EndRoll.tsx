@@ -103,21 +103,33 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
     }, [onExit]);
 
     return (
-        <div className="fixed inset-0 z-50 bg-black overflow-hidden touch-none">
-            {/* Control overlay */}
-            <div className="absolute top-0 left-0 right-0 z-50 p-4 flex justify-between items-center safe-area-top">
+        <div
+            className="fixed inset-0 z-50 bg-black touch-none"
+            style={{
+                width: '100vw',
+                height: '100dvh',
+                maxWidth: '100vw',
+                maxHeight: '100dvh',
+                overflow: 'hidden',
+            }}
+        >
+            {/* Control overlay - fixed positioning */}
+            <div
+                className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-3 py-3"
+                style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+            >
                 <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="px-5 py-3 bg-black/70 backdrop-blur-sm rounded-full text-white text-base font-medium"
+                    className="px-4 py-2 bg-black/80 backdrop-blur-sm rounded-full text-white text-sm font-medium"
                 >
-                    {isPlaying ? '⏸ 一時停止' : '▶️ 再生'}
+                    {isPlaying ? '⏸ 停止' : '▶️ 再生'}
                 </button>
-                <div className="text-white/60 text-lg font-medium">
+                <div className="text-white/60 text-base font-medium">
                     {phase === 'journey' && `${currentIndex + 1}/${sortedPhotos.length}`}
                 </div>
                 <button
                     onClick={handleExit}
-                    className="px-5 py-3 bg-black/70 backdrop-blur-sm rounded-full text-white text-base font-medium"
+                    className="px-4 py-2 bg-black/80 backdrop-blur-sm rounded-full text-white text-sm font-medium"
                 >
                     ✕ 終了
                 </button>
@@ -131,10 +143,10 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, scale: 3 }}
                         transition={{ duration: 1.5 }}
-                        className="absolute inset-0 p-2"
+                        className="absolute inset-0 p-1"
                     >
                         <div
-                            className="grid gap-1 w-full h-full"
+                            className="grid gap-0.5 w-full h-full"
                             style={{
                                 gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(sortedPhotos.length))}, 1fr)`,
                                 gridTemplateRows: `repeat(${Math.ceil(sortedPhotos.length / Math.ceil(Math.sqrt(sortedPhotos.length)))}, 1fr)`,
@@ -153,7 +165,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                         delay: gridZoomTarget === null ? i * 0.05 : 0,
                                         duration: gridZoomTarget === i ? 1.5 : 0.3,
                                     }}
-                                    className="overflow-hidden rounded-lg"
+                                    className="overflow-hidden"
                                 >
                                     <img
                                         src={photoUrls[i]}
@@ -170,26 +182,27 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             transition={{ delay: 0.5 }}
                             className="absolute inset-0 flex items-center justify-center bg-black/50"
                         >
-                            <div className="text-center px-8">
-                                <h1 className="text-4xl font-bold text-white mb-3">{trip.name}</h1>
-                                <p className="text-white/70 text-xl">{sortedPhotos.length}枚の写真</p>
+                            <div className="text-center px-6">
+                                <h1 className="text-3xl font-bold text-white mb-2">{trip.name}</h1>
+                                <p className="text-white/70 text-lg">{sortedPhotos.length}枚の写真</p>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* PHASE 2: JOURNEY - Mobile optimized vertical layout */}
+            {/* PHASE 2: JOURNEY - Fixed viewport layout */}
             <AnimatePresence>
                 {phase === 'journey' && currentPhoto && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex flex-col pt-16"
+                        className="absolute inset-0 flex flex-col"
+                        style={{ paddingTop: '60px' }}
                     >
-                        {/* Map - Top 35% */}
-                        <div className="relative h-[35%] min-h-[180px]">
+                        {/* Map - Fixed height */}
+                        <div className="relative" style={{ height: '30vh', minHeight: '150px' }}>
                             <MapView
                                 route={route}
                                 isAnimating={isPlaying}
@@ -198,51 +211,51 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             />
 
                             {/* Stats on map */}
-                            <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                                <div className="bg-black/80 backdrop-blur-sm px-4 py-2 rounded-xl">
-                                    <span className="text-white text-lg font-bold">{cumulativeDistance} km</span>
+                            <div className="absolute bottom-2 left-2 right-2 flex gap-2">
+                                <div className="bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                                    <span className="text-white text-base font-bold">{cumulativeDistance} km</span>
                                 </div>
-                                <div className="bg-black/80 backdrop-blur-sm px-4 py-2 rounded-xl">
-                                    <span className="text-white/80 text-base">
+                                <div className="bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                                    <span className="text-white/80 text-sm">
                                         {currentPhoto.timestamp.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Photo - Bottom 65% */}
-                        <div className="relative flex-1 bg-black p-3 pb-20">
+                        {/* Photo - Remaining space with object-contain */}
+                        <div
+                            className="relative flex-1 bg-black flex items-center justify-center p-2"
+                            style={{ paddingBottom: 'max(60px, env(safe-area-inset-bottom))' }}
+                        >
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentPhoto.id}
-                                    initial={{ opacity: 0, y: 30, rotateX: -10 }}
-                                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="w-full h-full rounded-2xl overflow-hidden shadow-2xl"
-                                    style={{ perspective: '1000px' }}
+                                    transition={{ duration: 0.4 }}
+                                    className="w-full h-full flex items-center justify-center"
                                 >
-                                    <motion.img
+                                    <img
                                         src={photoUrls[currentIndex]}
                                         alt=""
-                                        className="w-full h-full object-cover"
-                                        initial={{ scale: 1.1 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ duration: 3.5 }}
+                                        className="max-w-full max-h-full object-contain rounded-lg"
+                                        style={{ maxHeight: 'calc(100% - 40px)' }}
                                     />
-
-                                    {/* Photo date overlay */}
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-5">
-                                        <p className="text-white/80 text-lg">
-                                            {currentPhoto.timestamp.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}
-                                        </p>
-                                    </div>
                                 </motion.div>
                             </AnimatePresence>
 
+                            {/* Photo date overlay */}
+                            <div className="absolute bottom-16 left-4 right-4 text-center">
+                                <p className="text-white/80 text-base bg-black/50 inline-block px-4 py-1 rounded-full">
+                                    {currentPhoto.timestamp.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}
+                                </p>
+                            </div>
+
                             {/* Progress bar */}
-                            <div className="absolute bottom-6 left-3 right-3">
-                                <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                            <div className="absolute bottom-4 left-4 right-4">
+                                <div className="h-1 bg-white/20 rounded-full overflow-hidden">
                                     <motion.div
                                         className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
                                         animate={{ width: `${((currentIndex + 1) / sortedPhotos.length) * 100}%` }}
@@ -254,22 +267,22 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 )}
             </AnimatePresence>
 
-            {/* PHASE 3: MONTAGE */}
+            {/* PHASE 3: MONTAGE - Contained */}
             <AnimatePresence>
                 {phase === 'montage' && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black flex items-center justify-center"
+                        className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden"
                     >
                         <AnimatePresence mode="sync">
                             {[0, 1, 2].map((offset) => {
                                 const idx = (montageIndex + offset) % sortedPhotos.length;
                                 const positions = [
-                                    { top: '10%', left: '5%', width: '60%', rotate: -5 },
-                                    { top: '25%', right: '5%', width: '55%', rotate: 4 },
-                                    { bottom: '15%', left: '15%', width: '50%', rotate: -3 },
+                                    { top: '15%', left: '5%', width: '50%', rotate: -5 },
+                                    { top: '25%', right: '5%', width: '45%', rotate: 4 },
+                                    { bottom: '20%', left: '20%', width: '40%', rotate: -3 },
                                 ];
                                 const pos = positions[offset];
 
@@ -290,7 +303,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                             zIndex: 3 - offset,
                                         }}
                                     >
-                                        <div className="bg-white p-2 pb-10 rounded-sm">
+                                        <div className="bg-white p-1 pb-6 rounded-sm">
                                             <img
                                                 src={photoUrls[idx]}
                                                 alt=""
@@ -311,13 +324,13 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute inset-0 flex items-center justify-center bg-black p-8"
+                        className="absolute inset-0 flex items-center justify-center bg-black p-6 overflow-auto"
                     >
-                        <div className="text-center w-full max-w-md">
+                        <div className="text-center w-full max-w-sm">
                             <motion.h2
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
-                                className="text-3xl font-bold text-white mb-8"
+                                className="text-2xl font-bold text-white mb-6"
                             >
                                 {trip.name}
                             </motion.h2>
@@ -326,19 +339,19 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="grid grid-cols-3 gap-4 mb-10"
+                                className="grid grid-cols-3 gap-3 mb-8"
                             >
-                                <div className="bg-white/10 rounded-2xl p-4">
-                                    <p className="text-3xl font-bold text-white">{trip.totalPhotos}</p>
-                                    <p className="text-base text-white/50 mt-1">写真</p>
+                                <div className="bg-white/10 rounded-xl p-3">
+                                    <p className="text-2xl font-bold text-white">{trip.totalPhotos}</p>
+                                    <p className="text-sm text-white/50">写真</p>
                                 </div>
-                                <div className="bg-white/10 rounded-2xl p-4">
-                                    <p className="text-3xl font-bold text-white">{trip.totalDistance}</p>
-                                    <p className="text-base text-white/50 mt-1">km</p>
+                                <div className="bg-white/10 rounded-xl p-3">
+                                    <p className="text-2xl font-bold text-white">{trip.totalDistance}</p>
+                                    <p className="text-sm text-white/50">km</p>
                                 </div>
-                                <div className="bg-white/10 rounded-2xl p-4">
-                                    <p className="text-3xl font-bold text-amber-400">{achievements.length}</p>
-                                    <p className="text-base text-white/50 mt-1">実績</p>
+                                <div className="bg-white/10 rounded-xl p-3">
+                                    <p className="text-2xl font-bold text-amber-400">{achievements.length}</p>
+                                    <p className="text-sm text-white/50">実績</p>
                                 </div>
                             </motion.div>
 
@@ -347,7 +360,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.6 }}
-                                    className="flex flex-wrap justify-center gap-3 mb-10"
+                                    className="flex flex-wrap justify-center gap-2 mb-8"
                                 >
                                     {achievements.map((a, i) => (
                                         <motion.div
@@ -355,10 +368,10 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                             initial={{ scale: 0 }}
                                             animate={{ scale: 1 }}
                                             transition={{ delay: 0.8 + i * 0.1 }}
-                                            className="bg-white/10 px-4 py-2 rounded-full flex items-center gap-2"
+                                            className="bg-white/10 px-3 py-1.5 rounded-full flex items-center gap-1.5"
                                         >
-                                            <span className="text-xl">{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
-                                            <span className="text-base text-white">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
+                                            <span className="text-lg">{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
+                                            <span className="text-sm text-white">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
                                         </motion.div>
                                     ))}
                                 </motion.div>
@@ -369,7 +382,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 1.2 }}
                                 onClick={handleExit}
-                                className="w-full py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl text-white text-xl font-bold"
+                                className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl text-white text-lg font-bold"
                             >
                                 おわり
                             </motion.button>
