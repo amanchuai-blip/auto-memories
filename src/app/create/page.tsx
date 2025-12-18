@@ -3,8 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, Loader2, AlertCircle } from 'lucide-react';
-import PhotoDropzone from '@/components/PhotoDropzone';
+import { ArrowLeft, Check, Loader2, AlertCircle, Camera } from 'lucide-react';
 import { processImages } from '@/lib/imageUtils';
 import { calculateAchievements, generateRouteFromPhotos, calculateTotalDistance, calculateDuration } from '@/lib/achievements';
 import { createTrip, addPhotosToTrip, getAllTrips } from '@/lib/db';
@@ -14,13 +13,37 @@ export default function CreatePage() {
     const router = useRouter();
     const [tripName, setTripName] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSelectingFiles, setIsSelectingFiles] = useState(false);
     const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0, filename: '' });
     const [error, setError] = useState<string | null>(null);
     const [processedPhotos, setProcessedPhotos] = useState<Photo[]>([]);
 
+    const handleSelectFiles = () => {
+        if (isProcessing || isSelectingFiles) return;
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = 'image/*';
+
+        input.onchange = async (e) => {
+            const target = e.target as HTMLInputElement;
+            if (target.files && target.files.length > 0) {
+                await handleFilesSelected(Array.from(target.files));
+            }
+        };
+
+        setIsSelectingFiles(true);
+        input.click();
+
+        // Reset after a short delay if no files selected
+        setTimeout(() => setIsSelectingFiles(false), 1000);
+    };
+
     const handleFilesSelected = useCallback(async (files: File[]) => {
         setError(null);
         setIsProcessing(true);
+        setIsSelectingFiles(false);
 
         try {
             const processed = await processImages(files, (current, total, filename) => {
@@ -56,6 +79,7 @@ export default function CreatePage() {
 
             setProcessedPhotos(photos);
 
+            // Auto-set trip name if empty
             if (!tripName) {
                 const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
                 const startDate = sorted[0].timestamp;
@@ -71,7 +95,10 @@ export default function CreatePage() {
     }, [tripName]);
 
     const handleCreateTrip = async () => {
-        if (processedPhotos.length === 0 || !tripName.trim()) return;
+        if (processedPhotos.length === 0) return;
+
+        // Use default name if empty
+        const finalName = tripName.trim() || '新しい旅';
 
         setIsProcessing(true);
         try {
@@ -88,7 +115,7 @@ export default function CreatePage() {
             const tripId = crypto.randomUUID();
             const trip: Trip = {
                 id: tripId,
-                name: tripName.trim(),
+                name: finalName,
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 startDate: sorted[0].timestamp,
@@ -107,7 +134,7 @@ export default function CreatePage() {
             router.push(`/play/${tripId}`);
         } catch (err) {
             console.error(err);
-            setError('保存に失敗');
+            setError('保存に失敗しました');
             setIsProcessing(false);
         }
     };
@@ -164,7 +191,7 @@ export default function CreatePage() {
             </header>
 
             {/* Content */}
-            <div style={{ flex: 1, padding: '20px', paddingBottom: '140px', position: 'relative', zIndex: 1 }}>
+            <div style={{ flex: 1, padding: '20px', paddingBottom: '160px', position: 'relative', zIndex: 1 }}>
                 {/* Title */}
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'block', fontWeight: '500' }}>タイトル</label>
@@ -187,15 +214,87 @@ export default function CreatePage() {
                     />
                 </div>
 
-                {/* Dropzone */}
-                <PhotoDropzone
-                    onFilesSelected={handleFilesSelected}
-                    isProcessing={isProcessing}
-                    processingProgress={processingProgress}
-                />
+                {/* Photo Selection Button */}
+                <button
+                    type="button"
+                    onClick={handleSelectFiles}
+                    disabled={isProcessing}
+                    style={{
+                        width: '100%',
+                        borderRadius: '20px',
+                        padding: '48px 24px',
+                        textAlign: 'center',
+                        border: '2px dashed rgba(255,255,255,0.2)',
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        cursor: isProcessing ? 'wait' : 'pointer',
+                    }}
+                >
+                    {isProcessing ? (
+                        <div>
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                                style={{ display: 'inline-block' }}
+                            >
+                                <Loader2 size={56} color="#a78bfa" />
+                            </motion.div>
+                            <div style={{ marginTop: '20px' }}>
+                                <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'white' }}>処理中...</p>
+                                {processingProgress.total > 0 && (
+                                    <>
+                                        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>
+                                            {processingProgress.current} / {processingProgress.total}
+                                        </p>
+                                        <div style={{
+                                            width: '100%',
+                                            height: '8px',
+                                            backgroundColor: 'rgba(255,255,255,0.1)',
+                                            borderRadius: '4px',
+                                            marginTop: '16px',
+                                            overflow: 'hidden',
+                                        }}>
+                                            <motion.div
+                                                style={{
+                                                    height: '100%',
+                                                    backgroundColor: '#8b5cf6',
+                                                    borderRadius: '4px',
+                                                }}
+                                                animate={{ width: `${(processingProgress.current / processingProgress.total) * 100}%` }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ) : isSelectingFiles ? (
+                        <div>
+                            <Loader2 size={56} color="#a78bfa" style={{ animation: 'spin 1s linear infinite' }} />
+                            <p style={{ fontSize: '20px', color: 'white', marginTop: '16px' }}>写真を選択中...</p>
+                        </div>
+                    ) : (
+                        <div>
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: '0 auto 20px',
+                                borderRadius: '20px',
+                                background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}>
+                                <Camera size={40} color="rgba(255,255,255,0.7)" />
+                            </div>
+                            <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'white' }}>写真を選択</p>
+                            <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
+                                タップして選択
+                            </p>
+                        </div>
+                    )}
+                </button>
 
                 <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '16px' }}>
-                    ※ 大量の写真は処理に時間がかかります
+                    ※ 写真の読み込みに時間がかかる場合があります
                 </p>
 
                 {/* Error */}
@@ -224,7 +323,7 @@ export default function CreatePage() {
 
                 {/* Success */}
                 <AnimatePresence>
-                    {processedPhotos.length > 0 && (
+                    {processedPhotos.length > 0 && !isProcessing && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -251,7 +350,7 @@ export default function CreatePage() {
                                 <div>
                                     <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#86efac' }}>{processedPhotos.length}枚準備完了</p>
                                     <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
-                                        GPS: {processedPhotos.filter(p => p.latitude).length}枚
+                                        GPS情報: {processedPhotos.filter(p => p.latitude).length}枚
                                     </p>
                                 </div>
                             </div>
@@ -260,7 +359,7 @@ export default function CreatePage() {
                 </AnimatePresence>
             </div>
 
-            {/* Bottom Button */}
+            {/* Bottom Button - Always show when photos are ready */}
             <AnimatePresence>
                 {processedPhotos.length > 0 && (
                     <motion.div
@@ -274,33 +373,32 @@ export default function CreatePage() {
                             right: 0,
                             padding: '20px',
                             paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
-                            background: 'linear-gradient(to top, rgba(10,10,10,0.95) 60%, transparent)',
+                            background: 'linear-gradient(to top, rgba(10,10,10,0.98) 70%, transparent)',
                         }}
                     >
                         <button
                             onClick={handleCreateTrip}
-                            disabled={isProcessing || !tripName.trim()}
+                            disabled={isProcessing}
                             style={{
                                 width: '100%',
                                 padding: '20px',
-                                background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
+                                background: isProcessing ? 'rgba(139,92,246,0.5)' : 'linear-gradient(to right, #8b5cf6, #ec4899)',
                                 border: 'none',
                                 borderRadius: '16px',
                                 color: 'white',
                                 fontSize: '22px',
                                 fontWeight: 'bold',
-                                cursor: 'pointer',
+                                cursor: isProcessing ? 'wait' : 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '12px',
-                                opacity: isProcessing || !tripName.trim() ? 0.5 : 1,
-                                boxShadow: '0 8px 32px rgba(139,92,246,0.3)',
+                                boxShadow: isProcessing ? 'none' : '0 8px 32px rgba(139,92,246,0.3)',
                             }}
                         >
                             {isProcessing ? (
                                 <>
-                                    <Loader2 size={24} className="animate-spin" />
+                                    <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
                                     作成中...
                                 </>
                             ) : (
@@ -310,6 +408,13 @@ export default function CreatePage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
         </main>
     );
 }
