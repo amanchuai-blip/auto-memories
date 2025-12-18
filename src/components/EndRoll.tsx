@@ -462,10 +462,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         }}
                     >
                         {/* Scrolling credits container */}
-                        <motion.div
-                            initial={{ y: '60%' }}
-                            animate={{ y: '-180%' }}
-                            transition={{ duration: 22, ease: 'linear' }}
+                        <div
                             style={{
                                 position: 'absolute',
                                 left: 0,
@@ -473,6 +470,8 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 top: '60%',
                                 textAlign: 'center',
                                 padding: '0 32px',
+                                animation: 'credits-scroll 22s linear forwards',
+                                animationPlayState: isPlaying ? 'running' : 'paused',
                             }}
                         >
                             {/* Title */}
@@ -585,7 +584,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                     この旅の思い出を写真に残してくれてありがとう
                                 </p>
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Fade gradients */}
                         <div style={{
@@ -648,7 +647,7 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                             bottom: 0,
                             backgroundColor: 'black',
                             overflow: 'hidden',
-                            zIndex: 50,
+                            zIndex: 100,
                         }}
                     >
                         {/* Background photo slideshow */}
@@ -741,6 +740,6 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

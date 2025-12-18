@@ -97,6 +97,17 @@ input:focus-visible {
   animation: scroll-up var(--scroll-duration, 20s) linear forwards;
 }
 
+/* Credits scroll animation - pausable */
+@keyframes credits-scroll {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-240%);
+  }
+}
+
 /* Pulse animation for map markers */
 @keyframes marker-pulse {
   0% {
