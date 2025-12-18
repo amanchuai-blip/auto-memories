@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, Loader2, AlertCircle, Camera } from 'lucide-react';
@@ -13,41 +13,28 @@ export default function CreatePage() {
     const router = useRouter();
     const [tripName, setTripName] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isSelectingFiles, setIsSelectingFiles] = useState(false);
-    const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0, filename: '' });
+    const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState<string | null>(null);
     const [processedPhotos, setProcessedPhotos] = useState<Photo[]>([]);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const handleSelectFiles = () => {
-        if (isProcessing || isSelectingFiles) return;
-
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.multiple = true;
-        input.accept = 'image/*';
-
-        input.onchange = async (e) => {
-            const target = e.target as HTMLInputElement;
-            if (target.files && target.files.length > 0) {
-                await handleFilesSelected(Array.from(target.files));
-            }
-        };
-
-        setIsSelectingFiles(true);
-        input.click();
-
-        // Reset after a short delay if no files selected
-        setTimeout(() => setIsSelectingFiles(false), 1000);
+        if (isProcessing) return;
+        // Use the hidden input
+        inputRef.current?.click();
     };
 
-    const handleFilesSelected = useCallback(async (files: File[]) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
         setError(null);
         setIsProcessing(true);
-        setIsSelectingFiles(false);
+        setProcessingProgress({ current: 0, total: files.length });
 
         try {
-            const processed = await processImages(files, (current, total, filename) => {
-                setProcessingProgress({ current, total, filename });
+            const processed = await processImages(Array.from(files), (current, total) => {
+                setProcessingProgress({ current, total });
             });
 
             if (processed.length === 0) {
@@ -79,11 +66,11 @@ export default function CreatePage() {
 
             setProcessedPhotos(photos);
 
-            // Auto-set trip name if empty
+            // Auto-set trip name
+            const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+            const startDate = sorted[0].timestamp;
+            const month = startDate.toLocaleDateString('ja-JP', { month: 'long' });
             if (!tripName) {
-                const sorted = [...photos].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-                const startDate = sorted[0].timestamp;
-                const month = startDate.toLocaleDateString('ja-JP', { month: 'long' });
                 setTripName(`${month}の旅`);
             }
         } catch (err) {
@@ -91,16 +78,19 @@ export default function CreatePage() {
             setError('エラーが発生しました');
         } finally {
             setIsProcessing(false);
+            // Reset input so same files can be selected again
+            if (inputRef.current) inputRef.current.value = '';
         }
-    }, [tripName]);
+    };
 
     const handleCreateTrip = async () => {
-        if (processedPhotos.length === 0) return;
+        if (processedPhotos.length === 0 || isProcessing) return;
 
-        // Use default name if empty
         const finalName = tripName.trim() || '新しい旅';
 
         setIsProcessing(true);
+        setError(null);
+
         try {
             const existingTrips = await getAllTrips();
             const isFirstTrip = existingTrips.length === 0;
@@ -134,10 +124,12 @@ export default function CreatePage() {
             router.push(`/play/${tripId}`);
         } catch (err) {
             console.error(err);
-            setError('保存に失敗しました');
+            setError('保存に失敗しました。もう一度お試しください。');
             setIsProcessing(false);
         }
     };
+
+    const canCreate = processedPhotos.length > 0 && !isProcessing;
 
     return (
         <main style={{
@@ -145,17 +137,21 @@ export default function CreatePage() {
             background: 'linear-gradient(180deg, #0a0a0a 0%, #1a1025 50%, #0f0a1a 100%)',
             color: 'white',
             fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative',
         }}>
-            {/* Background decoration */}
+            {/* Hidden file input */}
+            <input
+                ref={inputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+            />
+
+            {/* Background */}
             <div style={{
                 position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                top: 0, left: 0, right: 0, bottom: 0,
                 background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.15) 0%, transparent 50%)',
                 pointerEvents: 'none',
             }} />
@@ -191,10 +187,12 @@ export default function CreatePage() {
             </header>
 
             {/* Content */}
-            <div style={{ flex: 1, padding: '20px', paddingBottom: '160px', position: 'relative', zIndex: 1 }}>
-                {/* Title */}
+            <div style={{ padding: '20px', paddingBottom: '160px' }}>
+                {/* Title Input */}
                 <div style={{ marginBottom: '20px' }}>
-                    <label style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'block', fontWeight: '500' }}>タイトル</label>
+                    <label style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'block' }}>
+                        タイトル
+                    </label>
                     <input
                         type="text"
                         value={tripName}
@@ -214,7 +212,7 @@ export default function CreatePage() {
                     />
                 </div>
 
-                {/* Photo Selection Button */}
+                {/* Photo Selection */}
                 <button
                     type="button"
                     onClick={handleSelectFiles}
@@ -222,7 +220,7 @@ export default function CreatePage() {
                     style={{
                         width: '100%',
                         borderRadius: '20px',
-                        padding: '48px 24px',
+                        padding: '40px 24px',
                         textAlign: 'center',
                         border: '2px dashed rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.05)',
@@ -231,70 +229,42 @@ export default function CreatePage() {
                 >
                     {isProcessing ? (
                         <div>
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                                style={{ display: 'inline-block' }}
-                            >
-                                <Loader2 size={56} color="#a78bfa" />
-                            </motion.div>
-                            <div style={{ marginTop: '20px' }}>
-                                <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'white' }}>処理中...</p>
-                                {processingProgress.total > 0 && (
-                                    <>
-                                        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>
-                                            {processingProgress.current} / {processingProgress.total}
-                                        </p>
-                                        <div style={{
-                                            width: '100%',
-                                            height: '8px',
-                                            backgroundColor: 'rgba(255,255,255,0.1)',
-                                            borderRadius: '4px',
-                                            marginTop: '16px',
-                                            overflow: 'hidden',
-                                        }}>
-                                            <motion.div
-                                                style={{
-                                                    height: '100%',
-                                                    backgroundColor: '#8b5cf6',
-                                                    borderRadius: '4px',
-                                                }}
-                                                animate={{ width: `${(processingProgress.current / processingProgress.total) * 100}%` }}
-                                            />
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ) : isSelectingFiles ? (
-                        <div>
-                            <Loader2 size={56} color="#a78bfa" style={{ animation: 'spin 1s linear infinite' }} />
-                            <p style={{ fontSize: '20px', color: 'white', marginTop: '16px' }}>写真を選択中...</p>
+                            <Loader2 size={48} color="#a78bfa" style={{ animation: 'spin 1s linear infinite' }} />
+                            <p style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', marginTop: '16px' }}>
+                                処理中...
+                            </p>
+                            {processingProgress.total > 0 && (
+                                <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>
+                                    {processingProgress.current} / {processingProgress.total}
+                                </p>
+                            )}
                         </div>
                     ) : (
                         <div>
                             <div style={{
-                                width: '80px',
-                                height: '80px',
-                                margin: '0 auto 20px',
-                                borderRadius: '20px',
-                                background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))',
+                                width: '72px',
+                                height: '72px',
+                                margin: '0 auto 16px',
+                                borderRadius: '18px',
+                                background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(236,72,153,0.3))',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             }}>
-                                <Camera size={40} color="rgba(255,255,255,0.7)" />
+                                <Camera size={36} color="white" />
                             </div>
-                            <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'white' }}>写真を選択</p>
-                            <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
-                                タップして選択
+                            <p style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
+                                写真を選択
+                            </p>
+                            <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
+                                タップして写真を追加
                             </p>
                         </div>
                     )}
                 </button>
 
-                <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '16px' }}>
-                    ※ 写真の読み込みに時間がかかる場合があります
+                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '12px' }}>
+                    ※ 写真の処理には時間がかかることがあります
                 </p>
 
                 {/* Error */}
@@ -316,7 +286,7 @@ export default function CreatePage() {
                             }}
                         >
                             <AlertCircle size={24} color="#f87171" />
-                            <p style={{ color: '#fca5a5', fontSize: '18px' }}>{error}</p>
+                            <p style={{ color: '#fca5a5', fontSize: '16px' }}>{error}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -337,20 +307,22 @@ export default function CreatePage() {
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <div style={{
-                                    width: '56px',
-                                    height: '56px',
+                                    width: '52px',
+                                    height: '52px',
                                     borderRadius: '50%',
                                     backgroundColor: 'rgba(34,197,94,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                 }}>
-                                    <Check size={28} color="#4ade80" />
+                                    <Check size={26} color="#4ade80" />
                                 </div>
                                 <div>
-                                    <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#86efac' }}>{processedPhotos.length}枚準備完了</p>
-                                    <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
-                                        GPS情報: {processedPhotos.filter(p => p.latitude).length}枚
+                                    <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#86efac' }}>
+                                        {processedPhotos.length}枚準備完了
+                                    </p>
+                                    <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
+                                        GPS: {processedPhotos.filter(p => p.latitude).length}枚
                                     </p>
                                 </div>
                             </div>
@@ -359,55 +331,34 @@ export default function CreatePage() {
                 </AnimatePresence>
             </div>
 
-            {/* Bottom Button - Always show when photos are ready */}
-            <AnimatePresence>
-                {processedPhotos.length > 0 && (
-                    <motion.div
-                        initial={{ y: 100 }}
-                        animate={{ y: 0 }}
-                        exit={{ y: 100 }}
-                        style={{
-                            position: 'fixed',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            padding: '20px',
-                            paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
-                            background: 'linear-gradient(to top, rgba(10,10,10,0.98) 70%, transparent)',
-                        }}
-                    >
-                        <button
-                            onClick={handleCreateTrip}
-                            disabled={isProcessing}
-                            style={{
-                                width: '100%',
-                                padding: '20px',
-                                background: isProcessing ? 'rgba(139,92,246,0.5)' : 'linear-gradient(to right, #8b5cf6, #ec4899)',
-                                border: 'none',
-                                borderRadius: '16px',
-                                color: 'white',
-                                fontSize: '22px',
-                                fontWeight: 'bold',
-                                cursor: isProcessing ? 'wait' : 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '12px',
-                                boxShadow: isProcessing ? 'none' : '0 8px 32px rgba(139,92,246,0.3)',
-                            }}
-                        >
-                            {isProcessing ? (
-                                <>
-                                    <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
-                                    作成中...
-                                </>
-                            ) : (
-                                '記録を作成'
-                            )}
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Bottom Button */}
+            <div style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '20px',
+                paddingBottom: 'max(28px, env(safe-area-inset-bottom))',
+                background: 'linear-gradient(to top, rgba(10,10,10,0.98) 70%, transparent)',
+            }}>
+                <button
+                    onClick={handleCreateTrip}
+                    disabled={!canCreate}
+                    style={{
+                        width: '100%',
+                        padding: '18px',
+                        background: canCreate ? 'linear-gradient(to right, #8b5cf6, #ec4899)' : 'rgba(100,100,100,0.3)',
+                        border: 'none',
+                        borderRadius: '16px',
+                        color: canCreate ? 'white' : 'rgba(255,255,255,0.4)',
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        cursor: canCreate ? 'pointer' : 'not-allowed',
+                    }}
+                >
+                    {isProcessing ? '処理中...' : processedPhotos.length > 0 ? '記録を作成' : '写真を選択してください'}
+                </button>
+            </div>
 
             <style jsx global>{`
         @keyframes spin {
