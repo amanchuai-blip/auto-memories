@@ -63,6 +63,19 @@ export default function HomePage() {
       </header>
 
       <div style={{ padding: '20px', paddingBottom: '100px' }}>
+        {/* Data persistence notice */}
+        <div style={{
+          padding: '12px 16px',
+          marginBottom: '16px',
+          borderRadius: '12px',
+          backgroundColor: 'rgba(251,191,36,0.1)',
+          border: '1px solid rgba(251,191,36,0.2)',
+        }}>
+          <p style={{ fontSize: '13px', color: '#fbbf24', lineHeight: '1.5' }}>
+            ⚠️ 写真データはこの端末のブラウザに保存されます。ブラウザのデータを削除したり、シークレットモードでタブを閉じると記録が消えます。
+          </p>
+        </div>
+
         {/* Create Button */}
         <Link href="/create" style={{ textDecoration: 'none' }}>
           <motion.div
