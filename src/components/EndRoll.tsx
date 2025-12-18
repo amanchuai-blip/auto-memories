@@ -104,38 +104,65 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-black touch-none"
             style={{
-                width: '100vw',
-                height: '100dvh',
-                maxWidth: '100vw',
-                maxHeight: '100dvh',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'black',
+                zIndex: 9999,
                 overflow: 'hidden',
+                touchAction: 'none',
             }}
         >
-            {/* Control overlay - fixed positioning */}
-            <div
-                className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-3 py-3"
-                style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
-            >
+            {/* Controls */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 100,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px',
+                paddingTop: 'max(12px, env(safe-area-inset-top))',
+            }}>
                 <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="px-4 py-2 bg-black/80 backdrop-blur-sm rounded-full text-white text-sm font-medium"
+                    style={{
+                        padding: '8px 16px',
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                    }}
                 >
                     {isPlaying ? '⏸ 停止' : '▶️ 再生'}
                 </button>
-                <div className="text-white/60 text-base font-medium">
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '16px' }}>
                     {phase === 'journey' && `${currentIndex + 1}/${sortedPhotos.length}`}
-                </div>
+                </span>
                 <button
                     onClick={handleExit}
-                    className="px-4 py-2 bg-black/80 backdrop-blur-sm rounded-full text-white text-sm font-medium"
+                    style={{
+                        padding: '8px 16px',
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                    }}
                 >
                     ✕ 終了
                 </button>
             </div>
 
-            {/* PHASE 1: GRID */}
+            {/* GRID Phase */}
             <AnimatePresence>
                 {phase === 'grid' && (
                     <motion.div
@@ -143,173 +170,232 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, scale: 3 }}
                         transition={{ duration: 1.5 }}
-                        className="absolute inset-0 p-1"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            padding: '4px',
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(sortedPhotos.length))}, 1fr)`,
+                            gap: '2px',
+                        }}
                     >
-                        <div
-                            className="grid gap-0.5 w-full h-full"
-                            style={{
-                                gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(sortedPhotos.length))}, 1fr)`,
-                                gridTemplateRows: `repeat(${Math.ceil(sortedPhotos.length / Math.ceil(Math.sqrt(sortedPhotos.length)))}, 1fr)`,
-                            }}
-                        >
-                            {sortedPhotos.map((photo, i) => (
-                                <motion.div
-                                    key={photo.id}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{
-                                        opacity: gridZoomTarget === i ? 1 : gridZoomTarget !== null ? 0 : 1,
-                                        scale: gridZoomTarget === i ? 10 : 1,
-                                        zIndex: gridZoomTarget === i ? 10 : 0,
-                                    }}
-                                    transition={{
-                                        delay: gridZoomTarget === null ? i * 0.05 : 0,
-                                        duration: gridZoomTarget === i ? 1.5 : 0.3,
-                                    }}
-                                    className="overflow-hidden"
-                                >
-                                    <img
-                                        src={photoUrls[i]}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                    />
-                                </motion.div>
-                            ))}
-                        </div>
+                        {sortedPhotos.map((photo, i) => (
+                            <motion.div
+                                key={photo.id}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{
+                                    opacity: gridZoomTarget === i ? 1 : gridZoomTarget !== null ? 0 : 1,
+                                    scale: gridZoomTarget === i ? 10 : 1,
+                                    zIndex: gridZoomTarget === i ? 10 : 0,
+                                }}
+                                transition={{
+                                    delay: gridZoomTarget === null ? i * 0.03 : 0,
+                                    duration: gridZoomTarget === i ? 1.5 : 0.2,
+                                }}
+                                style={{ overflow: 'hidden' }}
+                            >
+                                <img
+                                    src={photoUrls[i]}
+                                    alt=""
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            </motion.div>
+                        ))}
 
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.5 }}
-                            className="absolute inset-0 flex items-center justify-center bg-black/50"
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                            }}
                         >
-                            <div className="text-center px-6">
-                                <h1 className="text-3xl font-bold text-white mb-2">{trip.name}</h1>
-                                <p className="text-white/70 text-lg">{sortedPhotos.length}枚の写真</p>
+                            <div style={{ textAlign: 'center', padding: '24px' }}>
+                                <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>{trip.name}</h1>
+                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '18px' }}>{sortedPhotos.length}枚の写真</p>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* PHASE 2: JOURNEY - Fixed viewport layout */}
+            {/* JOURNEY Phase */}
             <AnimatePresence>
                 {phase === 'journey' && currentPhoto && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex flex-col"
-                        style={{ paddingTop: '60px' }}
+                        style={{
+                            position: 'absolute',
+                            top: '50px',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
                     >
-                        {/* Map - Fixed height */}
-                        <div className="relative" style={{ height: '30vh', minHeight: '150px' }}>
+                        {/* Map */}
+                        <div style={{ height: '25%', minHeight: '120px', position: 'relative' }}>
                             <MapView
                                 route={route}
                                 isAnimating={isPlaying}
                                 currentPointIndex={Math.min(currentIndex, route.length - 1)}
                                 className="w-full h-full"
                             />
-
-                            {/* Stats on map */}
-                            <div className="absolute bottom-2 left-2 right-2 flex gap-2">
-                                <div className="bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                                    <span className="text-white text-base font-bold">{cumulativeDistance} km</span>
-                                </div>
-                                <div className="bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                                    <span className="text-white/80 text-sm">
-                                        {currentPhoto.timestamp.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '8px',
+                                left: '8px',
+                                display: 'flex',
+                                gap: '8px',
+                            }}>
+                                <span style={{
+                                    backgroundColor: 'rgba(0,0,0,0.8)',
+                                    color: 'white',
+                                    padding: '4px 12px',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                }}>
+                                    {cumulativeDistance} km
+                                </span>
                             </div>
                         </div>
 
-                        {/* Photo - Remaining space with object-contain */}
-                        <div
-                            className="relative flex-1 bg-black flex items-center justify-center p-2"
-                            style={{ paddingBottom: 'max(60px, env(safe-area-inset-bottom))' }}
-                        >
+                        {/* Photo Container - FIXED */}
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px',
+                            paddingBottom: '60px',
+                            backgroundColor: 'black',
+                            overflow: 'hidden',
+                        }}>
                             <AnimatePresence mode="wait">
-                                <motion.div
+                                <motion.img
                                     key={currentPhoto.id}
+                                    src={photoUrls[currentIndex]}
+                                    alt=""
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="w-full h-full flex items-center justify-center"
-                                >
-                                    <img
-                                        src={photoUrls[currentIndex]}
-                                        alt=""
-                                        className="max-w-full max-h-full object-contain rounded-lg"
-                                        style={{ maxHeight: 'calc(100% - 40px)' }}
-                                    />
-                                </motion.div>
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    style={{
+                                        maxWidth: '100%',
+                                        maxHeight: '100%',
+                                        objectFit: 'contain',
+                                        borderRadius: '8px',
+                                    }}
+                                />
                             </AnimatePresence>
 
-                            {/* Photo date overlay */}
-                            <div className="absolute bottom-16 left-4 right-4 text-center">
-                                <p className="text-white/80 text-base bg-black/50 inline-block px-4 py-1 rounded-full">
-                                    {currentPhoto.timestamp.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}
-                                </p>
+                            {/* Date */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '70px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                color: 'rgba(255,255,255,0.8)',
+                                padding: '4px 16px',
+                                borderRadius: '20px',
+                                fontSize: '14px',
+                            }}>
+                                {currentPhoto.timestamp.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}
                             </div>
 
-                            {/* Progress bar */}
-                            <div className="absolute bottom-4 left-4 right-4">
-                                <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                                    <motion.div
-                                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
-                                        animate={{ width: `${((currentIndex + 1) / sortedPhotos.length) * 100}%` }}
-                                    />
-                                </div>
+                            {/* Progress */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '20px',
+                                left: '16px',
+                                right: '16px',
+                                height: '4px',
+                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                borderRadius: '2px',
+                                overflow: 'hidden',
+                            }}>
+                                <motion.div
+                                    style={{
+                                        height: '100%',
+                                        background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
+                                    }}
+                                    animate={{ width: `${((currentIndex + 1) / sortedPhotos.length) * 100}%` }}
+                                />
                             </div>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* PHASE 3: MONTAGE - Contained */}
+            {/* MONTAGE Phase */}
             <AnimatePresence>
                 {phase === 'montage' && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'black',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                        }}
                     >
                         <AnimatePresence mode="sync">
                             {[0, 1, 2].map((offset) => {
                                 const idx = (montageIndex + offset) % sortedPhotos.length;
-                                const positions = [
-                                    { top: '15%', left: '5%', width: '50%', rotate: -5 },
-                                    { top: '25%', right: '5%', width: '45%', rotate: 4 },
-                                    { bottom: '20%', left: '20%', width: '40%', rotate: -3 },
+                                const styles = [
+                                    { top: '10%', left: '5%', width: '50%', rotate: -5 },
+                                    { top: '20%', right: '5%', width: '45%', rotate: 4 },
+                                    { bottom: '15%', left: '15%', width: '40%', rotate: -3 },
                                 ];
-                                const pos = positions[offset];
+                                const s = styles[offset];
 
                                 return (
                                     <motion.div
                                         key={`${idx}-${montageIndex}`}
-                                        initial={{ opacity: 0, scale: 0.5, rotate: pos.rotate * 2 }}
-                                        animate={{ opacity: 1, scale: 1, rotate: pos.rotate }}
+                                        initial={{ opacity: 0, scale: 0.5 }}
+                                        animate={{ opacity: 1, scale: 1, rotate: s.rotate }}
                                         exit={{ opacity: 0, scale: 1.2 }}
                                         transition={{ duration: 0.3 }}
-                                        className="absolute shadow-2xl"
                                         style={{
-                                            top: pos.top,
-                                            left: pos.left,
-                                            right: pos.right,
-                                            bottom: pos.bottom,
-                                            width: pos.width,
+                                            position: 'absolute',
+                                            ...s,
                                             zIndex: 3 - offset,
+                                            backgroundColor: 'white',
+                                            padding: '4px',
+                                            paddingBottom: '24px',
+                                            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                                         }}
                                     >
-                                        <div className="bg-white p-1 pb-6 rounded-sm">
-                                            <img
-                                                src={photoUrls[idx]}
-                                                alt=""
-                                                className="w-full aspect-square object-cover"
-                                            />
-                                        </div>
+                                        <img
+                                            src={photoUrls[idx]}
+                                            alt=""
+                                            style={{ width: '100%', aspectRatio: '1', objectFit: 'cover' }}
+                                        />
                                     </motion.div>
                                 );
                             })}
@@ -318,19 +404,30 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                 )}
             </AnimatePresence>
 
-            {/* PHASE 4: CREDITS */}
+            {/* CREDITS Phase */}
             <AnimatePresence>
                 {phase === 'credits' && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute inset-0 flex items-center justify-center bg-black p-6 overflow-auto"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'black',
+                            padding: '24px',
+                        }}
                     >
-                        <div className="text-center w-full max-w-sm">
+                        <div style={{ textAlign: 'center', maxWidth: '320px', width: '100%' }}>
                             <motion.h2
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
-                                className="text-2xl font-bold text-white mb-6"
+                                style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '24px' }}
                             >
                                 {trip.name}
                             </motion.h2>
@@ -339,19 +436,19 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="grid grid-cols-3 gap-3 mb-8"
+                                style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}
                             >
-                                <div className="bg-white/10 rounded-xl p-3">
-                                    <p className="text-2xl font-bold text-white">{trip.totalPhotos}</p>
-                                    <p className="text-sm text-white/50">写真</p>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px' }}>
+                                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>{trip.totalPhotos}</p>
+                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>写真</p>
                                 </div>
-                                <div className="bg-white/10 rounded-xl p-3">
-                                    <p className="text-2xl font-bold text-white">{trip.totalDistance}</p>
-                                    <p className="text-sm text-white/50">km</p>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px' }}>
+                                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>{trip.totalDistance}</p>
+                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>km</p>
                                 </div>
-                                <div className="bg-white/10 rounded-xl p-3">
-                                    <p className="text-2xl font-bold text-amber-400">{achievements.length}</p>
-                                    <p className="text-sm text-white/50">実績</p>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px' }}>
+                                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#fbbf24' }}>{achievements.length}</p>
+                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>実績</p>
                                 </div>
                             </motion.div>
 
@@ -360,18 +457,25 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.6 }}
-                                    className="flex flex-wrap justify-center gap-2 mb-8"
+                                    style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}
                                 >
-                                    {achievements.map((a, i) => (
+                                    {achievements.slice(0, 5).map((a, i) => (
                                         <motion.div
                                             key={a.id}
                                             initial={{ scale: 0 }}
                                             animate={{ scale: 1 }}
                                             transition={{ delay: 0.8 + i * 0.1 }}
-                                            className="bg-white/10 px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                                            style={{
+                                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                            }}
                                         >
-                                            <span className="text-lg">{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
-                                            <span className="text-sm text-white">{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
+                                            <span style={{ fontSize: '16px' }}>{ACHIEVEMENT_DEFINITIONS[a.type].icon}</span>
+                                            <span style={{ fontSize: '12px', color: 'white' }}>{ACHIEVEMENT_DEFINITIONS[a.type].title}</span>
                                         </motion.div>
                                     ))}
                                 </motion.div>
@@ -382,7 +486,17 @@ export default function EndRoll({ trip, photos, onComplete, onExit }: EndRollPro
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 1.2 }}
                                 onClick={handleExit}
-                                className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl text-white text-lg font-bold"
+                                style={{
+                                    width: '100%',
+                                    padding: '16px',
+                                    background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    fontSize: '18px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                }}
                             >
                                 おわり
                             </motion.button>
